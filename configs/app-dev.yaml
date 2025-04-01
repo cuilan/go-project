@@ -1,0 +1,17 @@
+app:
+  httpPort: 8888
+  # release, debug, test
+  mode: debug
+
+log:
+  # 是否开启输出到文件
+  enable2file: false
+  path: logs
+  # emergency, alert, critical, error, warning, notice, info, debug
+  # 0-7
+  level: 7
+  maxdays: 1
+
+# ============================================================
+
+# your custom config
