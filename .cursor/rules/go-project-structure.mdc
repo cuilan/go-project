@@ -1,0 +1,31 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Go Project Structure Guide
+
+This document outlines the structure of this Go project to help you navigate and understand the codebase.
+
+## Key Files and Directories
+
+- **Entry Points**: The main application entry points are located in the `cmd/` directory. For this project, the main executable code is in [`cmd/your-go-project/main.go`](mdc:cmd/your-go-project/main.go).
+
+- **Public Packages**: Reusable packages intended for public use are located in the `pkg/` directory. This is the place for code that can be safely imported by other projects.
+
+- **Internal Packages**: Private application code resides in `internal/`. This code is not meant to be imported by external projects.
+    - `internal/http/`: Contains the HTTP server implementation ([`http_server.go`](mdc:internal/http/http_server.go)), middleware ([`middle_ware.go`](mdc:internal/http/middle_ware.go)), and controllers.
+    - `internal/conf/`: Handles configuration loading ([`unmarshal.go`](mdc:internal/conf/unmarshal.go)).
+    - `internal/rdb/`: Contains Redis-related logic ([`redis.go`](mdc:internal/rdb/redis.go)).
+    - `internal/utils/`: A collection of utility functions.
+
+- **Configuration**: Application configuration files are in the `configs/` directory (e.g., [`configs/app.yaml`](mdc:configs/app.yaml)).
+
+- **Build and Deployment**:
+    - `Makefile`: Contains common build, test, and deployment tasks.
+    - `scripts/`: Holds various build and utility scripts like [`scripts/cross_compile.sh`](mdc:scripts/cross_compile.sh).
+    - `init/`: Contains service scripts for deploying the application.
+
+- **Dependency Management**: Project dependencies are managed in [`go.mod`](mdc:go.mod).
+
+- **Versioning**: The application version is managed in [`version/version.go`](mdc:version/version.go).

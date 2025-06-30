@@ -12,9 +12,25 @@ go.sum
 *.out
 logs
 release
-pkg
 vendor
 .DS_Store
 
 *.db
 .vscode
+coverage.html
+
+# IDE-specific
+.idea/
+.vscode/
+
+# Compiled binary files
+bin/
+dist/
+
+# Log files
+*.log
+logs/
+
+# Coverage reports
+coverage.html
+coverage.out

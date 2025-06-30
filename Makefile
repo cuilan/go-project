@@ -2,8 +2,8 @@
 
 WHALE = "☁️"
 
-PKG=github.com/cuilan/your-go-project-name
-COMMANDS=your-go-project-name
+PKG=github.com/cuilan/go-project
+COMMANDS=your-go-project
 
 # all
 #PLATFORMS=darwin/amd64 darwin/arm64 linux/386 linux/amd64 linux/arm linux/arm64 windows/amd64
@@ -34,7 +34,7 @@ TEST_IMAGE_LIST ?=
 RELEASE=release
 
 # Used to populate variables in version package.
-VERSION ?= $(shell git describe --match 'v[0-9]*' --dirty='.m' --always)
+VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
 REVISION ?= $(shell git rev-parse HEAD)$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)
 
 GO_TAGS=$(if $(GO_BUILDTAGS),-tags "$(strip $(GO_BUILDTAGS))",)
@@ -59,87 +59,136 @@ OUTPUTDIR = $(join $(ROOTDIR), _output)
 
 #------------------------------------------------------
 
-.PHONY: clean all AUTHORS build test
-.DEFAULT: default
+.PHONY: all build clean help lint test test-cover install-tools vendor dist
 
-# Forcibly set the default goal to all, in case an include above brought in a rule definition.
-.DEFAULT_GOAL := all
+# ====================================================================================
+# 项目变量
+# ====================================================================================
 
-all: clean
+# 应用名称，应与 cmd/ 目录下的子目录名一致
+APP_NAME := your-go-project
+# 从 git tag 获取语义版本号 (例如: 1.2.3)，如果无 tag 则默认为 0.0.0
+GIT_VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
+# 获取 git commit hash (短格式)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+# Go 相关命令
+GO := go
+GOFMT := gofmt
+GOTEST := gotest
+# 默认编译平台列表 (空格分隔)
+PLATFORMS ?= "linux/amd64 windows/amd64 darwin/amd64 darwin/arm64"
 
-check: ## run all linters
-	@echo "$(WHALE) $@"
-	GOGC=75 gofmt -l -w .
+# ====================================================================================
+# 核心构建与分发
+# ====================================================================================
 
-AUTHORS: .mailmap .git/HEAD
-	git log --format='%aN <%aE>' | sort -fu > $@
+all: build ## 构建所有二进制文件到 bin/ 目录
 
-######################### build #########################
+build: ## 使用 Go 脚本进行跨平台构建
+	@echo "▶️  正在开始构建 (版本: $(GIT_VERSION)-$(GIT_COMMIT))..."
+	@PLATFORMS="$(PLATFORMS)" \
+	COMMANDS="$(APP_NAME)" \
+	VERSION="$(GIT_VERSION)" \
+	COMMIT="$(GIT_COMMIT)" \
+	$(GO) run ./tools/build.go
+	@echo "✅  构建完成。产物位于 bin/ 目录。"
 
-define CROSS_COMPILE
-@for pl in ${PLATFORMS}; do \
-	export GOOS=$$(echo $${pl} | cut -d'/' -f1); \
-	export GOARCH=$$(echo $${pl} | cut -d'/' -f2); \
-	export CGO_ENABLED=0; \
-	export TARGET=${RELEASE}/${COMMANDS}; \
-	if [ "$${GOOS}" == "windows" ]; then \
-		export CGO_ENABLED=1; \
-		export TARGET=$${TARGET}_$${GOOS}_$${GOARCH}.exe; \
-	else \
-		export TARGET=$${TARGET}_$${GOOS}_$${GOARCH}; \
-	fi; \
-	echo "Building for $${GOOS}/$${GOARCH} => $${TARGET}"; \
-	$(GO) build -mod=vendor -o $${TARGET} || exit 1; \
-done
-endef
+dist: build ## 构建并打包成 ZIP 可分发文件
+	@echo "▶️  正在创建分发包..."
+	@mkdir -p dist
+	@# 为每个平台创建对应的压缩包
+	@for p in $(PLATFORMS); do \
+		GOOS=`echo $$p | cut -d'/' -f1`; \
+		GOARCH=`echo $$p | cut -d'/' -f2`; \
+		VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_$${GOOS}_$${GOARCH}; \
+		ZIP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_$${GOOS}_$${GOARCH}.zip; \
+		BINARY_NAME=$(APP_NAME); \
+		if [ "$${GOOS}" = "windows" ]; then \
+			BINARY_NAME=$(APP_NAME).exe; \
+			VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_$${GOOS}_$${GOARCH}.exe; \
+		fi; \
+		echo "  📦 正在打包 $$p..."; \
+		TEMP_DIR=dist/staging; \
+		rm -rf $$TEMP_DIR; \
+		mkdir -p $$TEMP_DIR/release; \
+		cp bin/$$VERSIONED_APP_NAME $$TEMP_DIR/release/$$BINARY_NAME; \
+		cp -r configs $$TEMP_DIR/release/; \
+		cp -r init $$TEMP_DIR/release/; \
+		(cd $$TEMP_DIR && zip -r ../$$ZIP_NAME release > /dev/null); \
+		rm -rf $$TEMP_DIR; \
+	done
+	@echo "✅  ZIP 分发包创建完成，位于 dist/ 目录。"
 
-build: clean ## build the go packages
-	@echo "$(WHALE) $@"
-	@mkdir ${RELEASE}
-	@echo "Starting build..."
-	$(call CROSS_COMPILE)
-	@echo "Build completed!"
+# ====================================================================================
+# 代码质量与测试
+# ====================================================================================
 
-######################### install #########################
+lint: ## 运行所有代码检查器 (fmt, vet, staticcheck)
+	@echo "▶️  正在运行代码格式化检查..."
+	@$(GOFMT) -l -w .
+	@echo "▶️  正在运行 go vet..."
+	@$(GO) vet ./...
+	@echo "▶️  正在运行 staticcheck..."
+	@staticcheck ./...
+	@echo "✅  所有代码检查完成。"
 
-######################### test #########################
+test: ## 运行所有单元测试 (不包括代码覆盖率)
+	@echo "▶️  正在运行单元测试..."
+	@$(GO) test -v ./...
+	@echo "✅  测试完成。"
 
-test: ## run tests, except integration tests and tests that require root
-	@echo "$(WHALE) $@"
-	@$(GOTEST) ${TESTFLAGS} ${PACKAGES}
+test-cover: ## 运行测试并生成 HTML 覆盖率报告
+	@echo "▶️  正在生成代码覆盖率报告..."
+	@$(GO) test -v -cover -coverprofile=coverage.out ./...
+	@$(GO) tool cover -html=coverage.out -o coverage.html
+	@echo "✅  覆盖率报告已生成: coverage.html"
 
-######################### clean #########################
+# ====================================================================================
+# 依赖与工具管理
+# ====================================================================================
 
-clean: ## clean up binaries, releases and logs
-	@echo "$(WHALE) $@"
-	@rm -rf ${RELEASE}
-	@echo "Cleaning build ${RELEASE}..."
-	@rm -rf $(OUTPUTDIR)
-	@rm -rf logs/*
-	@echo "Cleaning logs..."
-
-clean-test: ## clean up debris from previously failed tests
-	@echo "$(WHALE) $@"
-
-######################### vendor #########################
-
-remove-replace:
-	@echo "$(WHALE) $@"
-
-vendor: ## ensure all the go.mod/go.sum files are up-to-date including vendor/ directory
-	@echo "$(WHALE) $@"
-	@$(GO) mod tidy
+vendor: mod-tidy ## 更新 vendor 目录
+	@echo "▶️  正在更新 vendor 目录..."
 	@$(GO) mod vendor
-	@$(GO) mod verify
+	@echo "✅  Vendor 目录已更新。"
 
-verify-vendor: ## verify if all the go.mod/go.sum files are up-to-date
-	@echo "$(WHALE) $@"
+mod-tidy: ## 整理 go.mod 文件
+	@echo "▶️  正在整理 go.mod..."
 	@$(GO) mod tidy
-	@$(GO) mod verify
+	@echo "✅  go.mod 已整理。"
 
-clean-vendor: remove-replace vendor
+mod-download: ## 下载模块到本地缓存
+	@echo "▶️  正在下载依赖..."
+	@$(GO) mod download
+	@echo "✅  依赖下载完成。"
 
-######################### help #########################
+# ====================================================================================
+# 清理与帮助
+# ====================================================================================
 
-help:
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+# 根据操作系统定义清理命令
+ifeq ($(OS),Windows_NT)
+    CLEAN_CMD = rmdir /s /q
+else
+    CLEAN_CMD = rm -rf
+endif
+
+clean: ## 清理构建产物和临时文件
+	@echo "▶️  正在清理..."
+	@$(CLEAN_CMD) bin
+	@$(CLEAN_CMD) dist
+	@$(CLEAN_CMD) coverage.html coverage.out
+	@echo "✅  清理完成。"
+
+install-tools: ## 安装代码检查等开发工具
+	@echo "▶️  正在安装开发工具 (staticcheck)..."
+	@$(GO) install honnef.co/go/tools/cmd/staticcheck@latest
+	@echo "✅  工具安装完成。"
+
+help: ## 显示此帮助信息
+	@echo "用法: make [目标]"
+	@echo ""
+	@echo "可用目标:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+.DEFAULT_GOAL := help

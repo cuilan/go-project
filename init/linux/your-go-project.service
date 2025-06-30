@@ -1,5 +1,5 @@
 [Unit]
-Description=Cloud Image Schedule Service
+Description={{APP_NAME}} Service
 # 等待网络连接成功后再启动服务
 Wants=network-online.target
 After=network-online.target
@@ -8,11 +8,25 @@ After=network-online.target
 WantedBy=multi-user.target
 
 [Service]
-ExecStartPre=
-ExecStart=/usr/local/bin/your-go-project /etc/your-go-project/
+# 服务运行的用户和用户组
+User={{USER}}
+Group={{GROUP}}
+
+# 服务可执行文件
 Type=simple
-#EnvironmentFile=-/etc/systemd/system/your-go-project.service.env
-KillMode=control-group
-Delegate=yes
+WorkingDirectory={{INSTALL_DIR}}
+ExecStart={{INSTALL_DIR}}/start.sh
+EnvironmentFile={{INSTALL_DIR}}/{{APP_NAME}}.env
+
+# 重启策略
 Restart=always
 RestartSec=5s
+
+# 进程控制
+KillMode=control-group
+Delegate=yes
+
+# 安全加固选项 (可按需启用)
+# ProtectSystem=full
+# PrivateTmp=true
+# NoNewPrivileges=true
