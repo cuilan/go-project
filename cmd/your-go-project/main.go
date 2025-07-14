@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	if err := runApp(nil); err != nil {
+	if err := RunApp(nil); err != nil {
 		log.Fatalf("Application run error: %v", err)
 	}
 }

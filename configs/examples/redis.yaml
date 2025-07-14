@@ -1,0 +1,16 @@
+# Redis 示例配置文件
+# Redis 配置 (如果提供了此部分，redis 模块将被自动初始化)
+redis:
+  network: "tcp" # optional: tcp, unix, default tcp
+  addr: "10.123.1.47:6379" # optional: default 127.0.0.1:6379
+  client_name: "" # optional: default empty
+  password: "" # optional: no password set
+  db: 0 # optional: use default DB
+  pool_size: 10 # optional: default 10
+  min_idle_conns: 1 # optional: default 0
+  max_idle_conns: 10 # optional: default 0
+  conn_max_idle_time: 3600 # optional: default 0
+  conn_max_lifetime: 3600 # optional: default 0
+  pool_timeout: 10 # optional: default 0, read_timeout + 1 second
+  read_timeout: 10 # optional: default 0, read_timeout + 1 second
+  write_timeout: 10 # optional: default 0, write_timeout + 1 second

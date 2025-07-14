@@ -53,7 +53,7 @@ loop:
 func runServiceLogic() {
 	// 调用与非服务版本共享的应用核心逻辑。
 	// 我们传入一个函数，用于在服务关闭时执行。
-	err := runApp(func() {
+	err := RunApp(func() {
 		// 这是优雅关闭时执行的逻辑
 		elog.Info(1, "优雅关闭逻辑已执行。")
 	})
@@ -76,7 +76,7 @@ func main() {
 		// 在控制台或终端中运行 (用于调试)
 		fmt.Println("正在以控制台模式运行。服务相关操作请使用管理脚本。")
 		// 直接调用应用的核心逻辑
-		err := runApp(nil) // 控制台模式不需要特殊的关闭钩子函数
+		err := RunApp(nil) // 控制台模式不需要特殊的关闭钩子函数
 		if err != nil {
 			fmt.Printf("应用运行出错: %v\n", err)
 			os.Exit(1)

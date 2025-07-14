@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -85,8 +86,8 @@ func getPlatforms() []string {
 	if p := os.Getenv("PLATFORMS"); p != "" {
 		return strings.Split(p, " ")
 	}
-	// 默认平台列表
-	return []string{"linux/amd64", "windows/amd64", "darwin/amd64", "darwin/arm64"}
+	// 默认当前平台
+	return []string{runtime.GOOS + "/" + runtime.GOARCH}
 }
 
 // getAppName 从环境变量 "COMMANDS" 中获取应用名称，如果未设置，则返回默认值。
@@ -108,7 +109,7 @@ func getVersion() string {
 	if err == nil {
 		return strings.TrimSpace(strings.TrimPrefix(string(out), "v"))
 	}
-	return "0.0.0"
+	return "0.1.0"
 }
 
 // getCommit 从环境变量 "COMMIT" 中获取 git commit hash，如果未设置，则尝试从 git 获取。

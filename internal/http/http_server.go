@@ -1,8 +1,9 @@
 package http
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-project/internal/conf"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -29,7 +30,7 @@ func Server(httpPort, mode string) {
 
 	// 绑定路由规则，执行的函数， gin.Context，封装了request和response
 	r.GET(Root, func(c *gin.Context) {
-		Success(c, conf.AppName)
+		Success(c, conf.App.Name)
 	})
 
 	// push config group
@@ -47,7 +48,7 @@ func Server(httpPort, mode string) {
 
 func healthCheck(c *gin.Context) {
 	resp := HealthResp{
-		Satellite: conf.Type,
+		Satellite: conf.App.Name,
 	}
 	Success(c, &resp)
 }

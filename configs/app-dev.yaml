@@ -5,13 +5,35 @@ app:
 
 log:
   # 是否开启输出到文件
-  enable2file: false
-  path: logs
-  # emergency, alert, critical, error, warning, notice, info, debug
-  # 0-7
-  level: 7
-  maxdays: 1
+  enable2file: true
+  path: "./logs"
+  # Log level: "debug", "info", "warn", "error"
+  level: "debug"
+  maxdays: 3
 
-# ============================================================
+# 数据库配置 (示例)
+# mysql:
+#   host: "127.0.0.1"
+#   port: 3306
+#   username: "root"
+#   password: "your_password"
+#   database: "your_db"
+#   max_open_conns: 20
+#   max_idle_conns: 10
+#   conn_max_lifetime: 3600 # 秒
 
-# your custom config
+# Redis 配置 (如果提供了此部分，redis 模块将被自动初始化)
+redis:
+  addr: "10.123.1.47:6379" # optional: default 127.0.0.1:6379
+  pool_size: 1 # optional: default 10
+
+# Nats 配置 (示例)
+# nats:
+#   url: "nats://127.0.0.1:4222"
+#   # ... 其他 nats 相关配置
+
+# # Kafka 配置 (示例)
+# kafka:
+#   brokers:
+#     - "127.0.0.1:9092"
+#   # ... 其他 kafka 相关配置

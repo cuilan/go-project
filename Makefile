@@ -59,7 +59,7 @@ OUTPUTDIR = $(join $(ROOTDIR), _output)
 
 #------------------------------------------------------
 
-.PHONY: all build clean help lint test test-cover install-tools vendor dist
+.PHONY: all build build-all clean help lint test test-cover install-tools vendor dist
 
 # ====================================================================================
 # 项目变量
@@ -76,15 +76,26 @@ GO := go
 GOFMT := gofmt
 GOTEST := gotest
 # 默认编译平台列表 (空格分隔)
-PLATFORMS ?= "linux/amd64 windows/amd64 darwin/amd64 darwin/arm64"
+PLATFORMS := linux/amd64 windows/amd64 darwin/amd64 darwin/arm64
+# 当前平台
+CURRENT_PLATFORM := $(shell go env GOOS)/$(shell go env GOARCH)
 
 # ====================================================================================
 # 核心构建与分发
 # ====================================================================================
 
-all: build ## 构建所有二进制文件到 bin/ 目录
+all: build-all ## 构建所有平台（PLATFORMS）的二进制文件到 bin/ 目录
 
-build: ## 使用 Go 脚本进行跨平台构建
+build: clean ## 构建当前平台的二进制文件
+	@echo "▶️  正在为当前平台($(CURRENT_PLATFORM))构建 (版本: $(GIT_VERSION)-$(GIT_COMMIT))..."
+	@PLATFORMS="$(CURRENT_PLATFORM)" \
+	COMMANDS="$(APP_NAME)" \
+	VERSION="$(GIT_VERSION)" \
+	COMMIT="$(GIT_COMMIT)" \
+	$(GO) run ./tools/build.go
+	@echo "✅  构建完成。产物位于 bin/ 目录。"
+
+build-all: ## 使用 Go 脚本进行跨平台构建
 	@echo "▶️  正在开始构建 (版本: $(GIT_VERSION)-$(GIT_COMMIT))..."
 	@PLATFORMS="$(PLATFORMS)" \
 	COMMANDS="$(APP_NAME)" \
@@ -93,7 +104,7 @@ build: ## 使用 Go 脚本进行跨平台构建
 	$(GO) run ./tools/build.go
 	@echo "✅  构建完成。产物位于 bin/ 目录。"
 
-dist: build ## 构建并打包成 ZIP 可分发文件
+dist: build-all ## 构建并打包成 ZIP 可分发文件
 	@echo "▶️  正在创建分发包..."
 	@mkdir -p dist
 	@# 为每个平台创建对应的压缩包
@@ -161,6 +172,15 @@ mod-download: ## 下载模块到本地缓存
 	@echo "▶️  正在下载依赖..."
 	@$(GO) mod download
 	@echo "✅  依赖下载完成。"
+
+# ====================================================================================
+# 开发阶段运行测试
+# ====================================================================================
+
+run-bin: ## 开发阶段运行测试
+	@echo "▶️  正在运行测试..."
+	./bin/$(APP_NAME)* -config-dir ./configs
+	@echo "✅  运行完成。"
 
 # ====================================================================================
 # 清理与帮助

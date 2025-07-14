@@ -1,41 +1,18 @@
 package rdb
 
 import (
-	"context"
-	"github.com/beego/beego/v2/core/logs"
 	"github.com/redis/go-redis/v9"
-	"strconv"
 )
 
-var Cli *redis.Client
+// RedisClient 将在 redis 配置存在时被初始化
+var RedisClient *redis.Client
 
-// ConnectRedis connect to redis, no password set, use default DB 0.
-func ConnectRedis(host string, port int) {
-	url := host + ":" + strconv.Itoa(port)
-	logs.Info("connect to redis: %s", url)
-	Cli = redis.NewClient(&redis.Options{
-		Addr:     url,
-		Password: "",
-		DB:       0,
-	})
-}
-
-func Set(key, value string) error {
-	_, err := Cli.Set(context.Background(), key, value, 0).Result()
-	if err != nil {
-		return err
+// GetRedis 是一个便捷的辅助函数，用于获取已初始化的客户端
+func GetRedis() *redis.Client {
+	if RedisClient == nil {
+		// 这种情况理论上不应该发生，因为模块化系统会确保它在使用前被初始化
+		// 如果发生，说明在没有redis配置的情况下调用了它，或者初始化失败
+		panic("redis client is not initialized")
 	}
-	return nil
-}
-
-func Get(key string) string {
-	return Cli.Get(context.Background(), key).Val()
-}
-
-func Del(key string) error {
-	_, err := Cli.Del(context.Background(), key).Result()
-	if err != nil {
-		return err
-	}
-	return nil
+	return RedisClient
 }
