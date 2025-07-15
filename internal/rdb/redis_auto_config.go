@@ -42,7 +42,7 @@ func (m *redisModule) Name() string {
 
 // Init 初始化 redis 客户端
 func (m *redisModule) Init(v *viper.Viper) error {
-	if RedisClient != nil {
+	if redisClient != nil {
 		slog.Info("redis client already initialized")
 		return nil
 	}
@@ -55,7 +55,7 @@ func (m *redisModule) Init(v *viper.Viper) error {
 	slog.Debug("redis config loaded", "addr", cfg.Addr, "pool_size", cfg.PoolSize)
 
 	// 初始化 redis 客户端
-	RedisClient = redis.NewClient(&redis.Options{
+	redisClient = redis.NewClient(&redis.Options{
 		Network:    cfg.Network,
 		Addr:       cfg.Addr,
 		ClientName: cfg.ClientName,
@@ -67,7 +67,7 @@ func (m *redisModule) Init(v *viper.Viper) error {
 	// 使用 Ping 检查连接
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if _, err := RedisClient.Ping(ctx).Result(); err != nil {
+	if _, err := redisClient.Ping(ctx).Result(); err != nil {
 		slog.Error("ping redis failed", "err", err)
 		return err
 	}
@@ -78,8 +78,8 @@ func (m *redisModule) Init(v *viper.Viper) error {
 
 // Close 关闭 redis 客户端连接
 func (m *redisModule) Close() error {
-	if RedisClient != nil {
-		if err := RedisClient.Close(); err != nil {
+	if redisClient != nil {
+		if err := redisClient.Close(); err != nil {
 			slog.Error("failed to close redis client", "err", err)
 			return err
 		}

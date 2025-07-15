@@ -15,11 +15,14 @@ const (
 )
 
 func Server(httpPort, mode string) {
-	if mode == "release" {
+	switch mode {
+	case "release":
 		gin.SetMode(gin.ReleaseMode)
-	} else if mode == "test" {
+	case "test":
 		gin.SetMode(gin.TestMode)
-	} else {
+	case "debug":
+		gin.SetMode(gin.DebugMode)
+	default:
 		gin.SetMode(gin.DebugMode)
 	}
 
