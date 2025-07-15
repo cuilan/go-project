@@ -2,12 +2,11 @@ package conf
 
 import (
 	"fmt"
+	"go-project/internal/logger"
+	"go-project/internal/module"
 	"log/slog"
 
 	"github.com/spf13/viper"
-
-	"go-project/internal/logger"
-	"go-project/internal/module"
 )
 
 const (
@@ -16,16 +15,25 @@ const (
 	DefaultName = "app"       // 默认配置名称
 )
 
+// AppConfig 应用配置
+type AppConfig struct {
+	Name    string `mapstructure:"name"`
+	Profile string `mapstructure:"profile"`
+}
+
+// GlobalVar 全局变量
+var App = new(AppConfig)
+
 // Unmarshal 解析配置文件
 // confPath 配置文件路径
-func Unmarshal(confPath string) {
-	UnmarshalProfile(confPath, "")
+func Unmarshal(confPath string, modules []module.Module) {
+	UnmarshalProfile(confPath, "", modules)
 }
 
 // UnmarshalProfile 解析配置文件
 // confPath 配置文件路径
 // profile 配置文件名称
-func UnmarshalProfile(confPath, profile string) {
+func UnmarshalProfile(confPath, profile string, modules []module.Module) {
 	// 1. 设置并读取基础配置文件 (app.yaml)
 	v := viper.New()
 	v.SetConfigName(DefaultName)
@@ -49,51 +57,38 @@ func UnmarshalProfile(confPath, profile string) {
 
 	// 将最终确定的 profile 保存到全局变量
 	App.Profile = activeProfile
+	App.Name = v.GetString("app.name")
 
 	// 3. 如果 profile 存在，则加载并合并对应的环境配置文件
 	if App.Profile != "" {
 		v.SetConfigName(DefaultName + "-" + App.Profile)
 		if err := v.MergeInConfig(); err != nil {
-			// 如果 profile 配置文件不存在，可以只打印警告而不 panic，取决于您的需求
-			// 在这里我们选择 panic，因为 profile 通常是必须的
 			panic(fmt.Errorf("merge profile config file failed: %w", err))
 		}
 	}
 
-	// 4. 将最终的配置 Unmarshal 到全局变量或结构体中
-	App.Name = v.GetString("app.name")
+	// 4. 日志模块必须提前初始化，确保日志格式统一，如果没有日志配置，按照默认配置初始化
+	if v.IsSet("log") {
+		var logCfg logger.LoggerConfig
+		if err := v.Sub("log").Unmarshal(&logCfg); err != nil {
+			panic(fmt.Errorf("unmarshal log config failed: %w", err))
+		}
+		// 手动初始化日志模块
+		logger.InitLogger(&logCfg)
+		slog.Info("logger module initialized as a core service")
+	}
 
-	// 初始化日志记录器
-	logger.InitLogger(
-		v.GetString("log.path"),
-		App.Name,
-		v.GetString("log.level"),
-		v.GetBool("log.enable2file"),
-		v.GetInt("log.maxdays"),
-	)
+	// 5. 初始化其他模块
+	initModules(v, modules)
 
-	// 5. 设置和初始化其他模块
-	slog.Info("======== Application config ========>")
-	slog.Info("app name", "name", App.Name)
-	slog.Info("app profile", "profile", App.Profile)
-	// slog.Info("http port", "port", App.HttpPort)
-	// slog.Info("app run mode", "mode", App.Mode)
-	slog.Info("-------------------------------------")
-	slog.Info("log enable to file", "enabled", v.GetBool("log.enable2file"))
-	slog.Info("log path", "path", v.GetString("log.path"))
-	slog.Info("log level", "level", v.GetString("log.level"))
-	slog.Info("log max days", "maxdays", v.GetInt("log.maxdays"))
-	slog.Info("-------------------------------------")
-
-	// 将 viper 实例传递给模块初始化函数
-	initModules(v)
-
-	slog.Info("<======= Application config =========")
+	slog.Info("application config completed", "name", App.Name, "profile", App.Profile)
 }
 
 // initModules 根据类型解析配置文件
-func initModules(v *viper.Viper) {
-	slog.Info("======== Initializing modules ========>")
+func initModules(v *viper.Viper, modules []module.Module) {
+	// 显式注册传入的模块
+	for _, m := range modules {
+		module.Register(m)
+	}
 	module.InitModules(v)
-	slog.Info("<======= Modules initialized =========")
 }

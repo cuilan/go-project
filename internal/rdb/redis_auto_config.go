@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
@@ -31,13 +30,9 @@ type RedisConfig struct {
 // redisModule 是 redis 模块的实现
 type redisModule struct{}
 
-// init 函数将在包加载时自动注册该模块
-func init() {
-	slog.Info("redis auto config init")
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		slog.Info("config file changed", "name", e.Name)
-	})
-	module.Register(&redisModule{})
+// NewModule 创建一个新的 redis 模块实例
+func NewModule() module.Module {
+	return &redisModule{}
 }
 
 // Name 返回模块名称，与配置文件中的键 "redis" 对应
@@ -88,6 +83,7 @@ func (m *redisModule) Close() error {
 			slog.Error("failed to close redis client", "err", err)
 			return err
 		}
+		slog.Info("redis client closed successfully")
 	}
 	return nil
 }

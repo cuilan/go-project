@@ -1,0 +1,21 @@
+# slog 日志配置 (如果提供了此部分，logger 模块将被自动初始化)
+log:
+  # 控制台输出配置
+  console:
+    enable_console: true # 可选：是否输出日志到控制台，默认：true
+    level: "debug" # 可选：日志级别: "debug", "info", "warn", "error"，默认：info
+    add_source: true # 可选：是否在日志中记录源码位置（文件名和行号），默认：true
+    console_format: "text" # 可选：控制台输出格式，可选值："text", "json"，默认："text"
+  # 文件输出配置
+  file:
+    enable_file: true # 可选：是否输出日志到文件，默认：true
+    level: "debug" # 可选：日志级别: "debug", "info", "warn", "error"，默认：info
+    path: "./logs" # 可选：日志文件路径，默认：./logs
+    filename: "default.log" # 可选：日志文件名，默认为 default.log
+    # 文件输出格式配置
+    add_source: true # 可选：是否在日志中记录源码位置（文件名和行号），默认：true
+    file_format: "text" # 可选：文件输出格式，可选值："text", "json"，默认："text"
+    file_max_size: 100 # 可选：文件最大体积（单位：MB），默认 100MB
+    file_max_backups: 3 # 可选：最多保留的旧日志文件数量，默认 3 个
+    file_max_age: 3 # 可选：旧日志文件保留天数，默认 3 天
+    file_compress: false # 可选：是否压缩旧的日志文件，默认：false

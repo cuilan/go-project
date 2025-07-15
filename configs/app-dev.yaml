@@ -1,17 +1,41 @@
-app:
-  httpPort: 8888
-  # release, debug, test
-  mode: debug
+# app-dev.yaml 配置
 
+# 自动配置的模块 ================================================
+
+# slog 日志配置 (如果提供了此部分，logger 模块将被自动初始化)
 log:
-  # 是否开启输出到文件
-  enable2file: true
-  path: "./logs"
-  # Log level: "debug", "info", "warn", "error"
-  level: "debug"
-  maxdays: 3
+  # 控制台输出配置
+  console:
+    enable_console: true
+    level: "debug"
+    add_source: true
+    console_format: "text"
+  # 文件输出配置
+  file:
+    enable_file: false
+    level: "info"
+    path: "./logs"
+    filename: "default.log"
+    add_source: true
+    file_format: "json"
+    file_max_size: 100
+    file_max_backups: 3
+    file_max_age: 7
+    file_compress: false
 
-# 数据库配置 (示例)
+# Redis 配置 (如果提供了此部分，redis 模块将被自动初始化)
+redis:
+  addr: "10.123.1.47:6379" # optional: default 127.0.0.1:6379
+  pool_size: 1 # optional: default 10
+
+# go-sql 数据库配置 (如果提供了此部分，mysql 模块将被自动初始化)
+go-sql:
+  driver: "mysql"
+  dsn: "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
+  max_open_conns: 20
+  max_idle_conns: 10
+  conn_max_lifetime: 3600
+
 # mysql:
 #   host: "127.0.0.1"
 #   port: 3306
@@ -22,18 +46,30 @@ log:
 #   max_idle_conns: 10
 #   conn_max_lifetime: 3600 # 秒
 
-# Redis 配置 (如果提供了此部分，redis 模块将被自动初始化)
-redis:
-  addr: "10.123.1.47:6379" # optional: default 127.0.0.1:6379
-  pool_size: 1 # optional: default 10
+# gin 配置 (如果提供了此部分，gin 模块将被自动初始化)
+gin:
+  mode: debug # 可选 debug, release, test, 默认 debug
+  port: 8888 # 可选 8080, 默认 8080
+  read_timeout: 10 # 可选 10, 默认 10
+  write_timeout: 10 # 可选 10, 默认 10
+  max_header_bytes: 1024 # 可选 1024, 默认 1024
 
-# Nats 配置 (示例)
+# Nats 配置 (如果提供了此部分，nats 模块将被自动初始化)
 # nats:
 #   url: "nats://127.0.0.1:4222"
 #   # ... 其他 nats 相关配置
 
-# # Kafka 配置 (示例)
+# # Kafka 配置 (如果提供了此部分，kafka 模块将被自动初始化)
 # kafka:
 #   brokers:
 #     - "127.0.0.1:9092"
 #   # ... 其他 kafka 相关配置
+
+# 手动配置的模块 ================================================
+
+other:
+  name: "zhangsan"
+  age: 18
+  address: "beijing"
+  phone: "1234567890"
+  job: "developer"
