@@ -7,7 +7,7 @@ import (
 var host = "http://localhost:"
 
 func setup() {
-	conf.Unmarshal("../../configs")
+	conf.Unmarshal("../../configs", nil)
 
 	// go Server(conf.App.HttpPort, conf.App.Mode)
 }
