@@ -1,55 +1,192 @@
 # Copyright The Authors.
 
-WHALE = "☁️"
-RUN = "▶️"
-OK = "✅"
-INFO = "ℹ️"
-WARNING = "⚠️"
-ERROR = "❌"
+# ************************************************************************************
+# 公共配置变量
+# Common configuration variables
+# ************************************************************************************
 
-# 包含公共定义
-include Makefile.common
+PKG=github.com/cuilan/go-project
 
-# 主包文件
-MAIN_FILE := $(MAIN_PACKAGE)/main.go
+# 应用名称，应与 cmd/ 目录下的子目录名一致
+# Application name, should match the subdirectory name under cmd/
+APP_NAME := your-app
+
+# ************************************************************************************
+
+# Get current project absolute path
+ROOTDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+# Main package path
+MAIN_PACKAGE := $(ROOTDIR)/cmd/$(APP_NAME)
 
 # ====================================================================================
-# 平台特定配置
+# Platform detection and configuration
 # ====================================================================================
 
-# 全平台
+ifneq "$(strip $(shell command -v $(GO) 2>/dev/null))" ""
+	GOOS ?= $(shell $(GO) env GOOS)
+	GOARCH ?= $(shell $(GO) env GOARCH)
+else
+	ifeq ($(GOOS),)
+		# approximate GOOS for the platform if we don't have Go and GOOS isn't
+		# set. We leave GOARCH unset, so that may need to be fixed.
+		ifeq ($(OS),Windows_NT)
+			GOOS = windows
+		else
+			UNAME_S := $(shell uname -s)
+			ifeq ($(UNAME_S),Linux)
+				GOOS = linux
+			endif
+			ifeq ($(UNAME_S),Darwin)
+				GOOS = darwin
+			endif
+			ifeq ($(UNAME_S),FreeBSD)
+				GOOS = freebsd
+			endif
+		endif
+	else
+		GOOS ?= $$GOOS
+		GOARCH ?= $$GOARCH
+	endif
+endif
+
+#include platform specific makefile
+include Makefile.$(GOOS)
+
+# ====================================================================================
+# Platform definitions
+# ====================================================================================
+
+# MacOS
+DARWIN_AMD64 := darwin/amd64
+DARWIN_ARM64 := darwin/arm64
+DARWIN := $(DARWIN_AMD64) $(DARWIN_ARM64)
+
+# Linux
+LINUX_386 := linux/386
+LINUX_AMD64 := linux/amd64
+LINUX_ARM := linux/arm
+LINUX_ARM64 := linux/arm64
+LINUX := $(LINUX_386) $(LINUX_AMD64) $(LINUX_ARM) $(LINUX_ARM64)
+
+# Windows
+WINDOWS_386 := windows/386
+WINDOWS_AMD64 := windows/amd64
+WINDOWS_ARM := windows/arm
+WINDOWS_ARM64 := windows/arm64
+WINDOWS := $(WINDOWS_386) $(WINDOWS_AMD64) $(WINDOWS_ARM) $(WINDOWS_ARM64)
+
+# Platform combinations
+ALL_32 := $(LINUX_386) $(WINDOWS_386)
+ALL_64 := $(DARWIN_AMD64) $(LINUX_AMD64) $(WINDOWS_AMD64)
+ALL_ARM := $(LINUX_ARM) $(WINDOWS_ARM)
+ALL_ARM64 := $(DARWIN_ARM64) $(LINUX_ARM64) $(WINDOWS_ARM64)
+ALL_PLATFORMS := $(ALL_32) $(ALL_64) $(ALL_ARM) $(ALL_ARM64)
+
+# All platforms
 # PLATFORMS := $(ALL_PLATFORMS)
 PLATFORMS := $(ALL_64)
 
 # ====================================================================================
-# 安装路径，不建议修改
+# Git related variables
 # ====================================================================================
 
-ifeq ($(OS),Linux)
-	PREFIX        ?= /usr/local
-	BINDIR        ?= $(PREFIX)/bin
-	DATADIR       ?= $(PREFIX)/share
-	DOCDIR        ?= $(DATADIR)/doc
-	MANDIR        ?= $(DATADIR)/man
-else ifeq ($(OS),Windows)
-	PREFIX        ?= C:/Program Files/$(APP_NAME)
-	BINDIR        ?= $(PREFIX)/bin
-	DATADIR       ?= $(PREFIX)/share
-	DOCDIR        ?= $(DATADIR)/doc
-	MANDIR        ?= $(DATADIR)/man
-endif
+# Get semantic version from git tag
+GIT_VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
+# Get git branch
+GIT_REVISION := $(shell git rev-parse --abbrev-ref HEAD)
+# Get git commit hash (short format)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
 
 # ====================================================================================
-
-.PHONY: all build build-all dist run-bin clean
-
-# ====================================================================================
-# 核心构建与分发
+# Go related commands
 # ====================================================================================
 
-all: build-all ## 构建所有平台（PLATFORMS）的二进制文件到 bin/ 目录
+GO := go
+GOFMT := gofmt
 
-build: ## 构建当前平台的二进制文件
+# Current platform
+CURRENT_PLATFORM := $(shell go env GOOS)/$(shell go env GOARCH)
+
+# ====================================================================================
+# Common targets
+# ====================================================================================
+
+.PHONY: all version mod-tidy mod-download install-tools test test-cover lint mod-vendor run build build-all clean help
+
+version: ## Show version information
+	@echo "$(WHALE) $@"
+	@echo "ROOTDIR: $(ROOTDIR)"
+	@echo "APP_NAME: $(APP_NAME)"
+	@echo "Current platform: $(CURRENT_PLATFORM)"
+	@echo "git tag: $(GIT_VERSION)"
+	@echo "git branch: $(GIT_REVISION)"
+	@echo "git commit: $(GIT_COMMIT)"
+	@$(GO) run $(MAIN_PACKAGE) --version
+
+mod-tidy: ## Tidy go.mod file
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Tidying go.mod..."
+	@$(GO) mod tidy
+	@echo "$(OK)  go.mod tidied."
+
+mod-download: ## Download modules to local cache
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Downloading dependencies..."
+
+install-tools: ## Install code checking development tools
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Installing development tools (staticcheck)..."
+	@$(GO) install honnef.co/go/tools/cmd/staticcheck@latest
+	@echo "$(OK)  Tools installation completed."
+
+# ====================================================================================
+# Test related targets
+# ====================================================================================
+
+test: ## Run all unit tests
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Running unit tests..."
+	@$(GO) test -v ./...
+	@echo "$(OK)  Tests completed."
+
+test-cover: ## Run tests and generate HTML coverage report
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Generating code coverage report..."
+	@$(GO) test -v -cover -coverprofile=coverage.out ./...
+	@$(GO) tool cover -html=coverage.out -o coverage.html
+	@echo "$(OK)  Coverage report generated: coverage.html"
+
+# ====================================================================================
+# Code quality checks
+# ====================================================================================
+
+lint: ## Run all code checkers
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Running code formatting check..."
+	@$(GOFMT) -l -w .
+	@echo "$(RUN)  Running go vet..."
+	@$(GO) vet ./...
+	@echo "$(RUN)  Running staticcheck..."
+	@staticcheck ./...
+	@echo "$(OK)  All code checks completed."
+
+# ====================================================================================
+# Dependency management
+# ====================================================================================
+
+mod-vendor: mod-tidy ## Update vendor directory
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Updating vendor directory..."
+	@$(GO) mod vendor
+	@echo "$(OK)  Vendor directory updated."
+
+# ====================================================================================
+# Core build and distribution
+# ====================================================================================
+
+all: build-all ## Build all platform binaries to bin/ directory
+
+build: ## Build for current platform
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Building for current platform ($(CURRENT_PLATFORM)) (version: $(GIT_VERSION)-$(GIT_COMMIT))..."
 	@PLATFORMS="$(CURRENT_PLATFORM)" \
@@ -59,7 +196,7 @@ build: ## 构建当前平台的二进制文件
 	$(GO) run ./tools/build.go
 	@echo "$(OK)  Build completed. Output located in bin/ directory."
 
-build-all: ## 使用 Go 脚本进行跨平台构建
+build-all: ## Build for all platforms
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Starting build (version: $(GIT_VERSION)-$(GIT_COMMIT))..."
 	@PLATFORMS="$(PLATFORMS)" \
@@ -69,54 +206,73 @@ build-all: ## 使用 Go 脚本进行跨平台构建
 	$(GO) run ./tools/build.go
 	@echo "$(OK)  Build completed. Output located in bin/ directory."
 
-dist: build-all ## 构建并打包成 ZIP 可分发文件
+dist: build-all ## Build and package as ZIP distribution
 	@echo "$(WHALE) $@"
+	$(call create_dir,dist)
 	@echo "$(RUN)  Creating distribution packages..."
-	@mkdir -p dist
-	@# 为每个平台创建对应的压缩包
 	@for p in $(PLATFORMS); do \
+		echo "  $(DIST) Processing platform: $$p"; \
 		GOOS=`echo $$p | cut -d'/' -f1`; \
 		GOARCH=`echo $$p | cut -d'/' -f2`; \
 		VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_$${GOOS}_$${GOARCH}; \
-		ZIP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_$${GOOS}_$${GOARCH}.zip; \
 		BINARY_NAME=$(APP_NAME); \
+		EXT=""; \
 		if [ "$${GOOS}" = "windows" ]; then \
 			BINARY_NAME=$(APP_NAME).exe; \
-			VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_$${GOOS}_$${GOARCH}.exe; \
+			EXT=".exe"; \
 		fi; \
-		echo "  [PKG] Packaging $$p..."; \
-		TEMP_DIR=dist/staging; \
-		rm -rf $$TEMP_DIR; \
-		mkdir -p $$TEMP_DIR/release; \
-		cp bin/$$VERSIONED_APP_NAME $$TEMP_DIR/release/$$BINARY_NAME; \
-		cp -r configs $$TEMP_DIR/release/; \
-		cp -r init $$TEMP_DIR/release/; \
-		(cd $$TEMP_DIR && zip -r ../$$ZIP_NAME release > /dev/null); \
-		rm -rf $$TEMP_DIR; \
+		echo "    Creating $$VERSIONED_APP_NAME directory..."; \
+		mkdir -p dist/$$VERSIONED_APP_NAME; \
+		mkdir -p dist/$$VERSIONED_APP_NAME/bin; \
+		echo "    Copying binary file..."; \
+		cp bin/$$VERSIONED_APP_NAME$$EXT dist/$$VERSIONED_APP_NAME/bin/$$BINARY_NAME; \
+		echo "    Copying configs directory..."; \
+		cp -r configs dist/$$VERSIONED_APP_NAME/configs; \
+		echo "    Copying init directory..."; \
+		cp -r init dist/$$VERSIONED_APP_NAME/init; \
+		echo "    Creating zip file..."; \
+		zip -r dist/$$VERSIONED_APP_NAME.zip dist/$$VERSIONED_APP_NAME > /dev/null; \
+		echo "    $(OK) Platform $$p completed"; \
 	done
-	@echo "$(OK)  ZIP distribution packages created successfully in dist/ directory."
+	@echo "$(OK)  Distribution packages created successfully in dist/ directory."
 
 # ====================================================================================
-# 运行
+# Run
 # ====================================================================================
 
-run-bin: build ## 运行可执行文件
+run: ## Run application
+	@echo "$(WHALE) $@"
+	@$(GO) run $(MAIN_PACKAGE) --config-dir ./configs
+	@echo "$(OK)  Run completed."
+
+run-bin: build ## Run executable file
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Running executable file..."
 	./bin/$(APP_NAME)* --config-dir ./configs
 	@echo "$(OK)  Run completed."
 
 # ====================================================================================
-# 清理
+# Clean
 # ====================================================================================
 
-CLEAN_CMD = rm -rf
-
-clean: ## 清理构建产物和临时文件
+clean: ## Clean build artifacts and temporary files
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Cleaning..."
-	@$(CLEAN_CMD) bin
-	@$(CLEAN_CMD) dist
-	@$(CLEAN_CMD) coverage.html coverage.out
-	@$(CLEAN_CMD) logs
+	@$(call clean_dir,bin)
+	@$(call clean_dir,dist)
+	@$(call clean_dir,coverage.html)
+	@$(call clean_dir,coverage.out)
+	@$(call clean_dir,logs)
 	@echo "$(OK)  Cleanup completed."
+
+# ====================================================================================
+# Help information
+# ====================================================================================
+
+help: ## Show this help information
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Available targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+.DEFAULT_GOAL := help

@@ -15,6 +15,8 @@ func setup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// 手动初始化 redis 模块
+	NewModule().Init(viper.GetViper())
 }
 
 func TestInitRedis(t *testing.T) {

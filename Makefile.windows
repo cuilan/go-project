@@ -2,12 +2,13 @@
 # Windows-specific Makefile for Go Project
 
 # Windows 平台特定的图标和标识
-WHALE = "[BUILD]"
-RUN = "[RUN]"
-OK = "[OK]"
-INFO = "[INFO]"
+WHALE   = "[BUILD]"
+RUN     = "[RUN]"
+OK      = "[OK]"
+INFO    = "[INFO]"
 WARNING = "[WARN]"
-ERROR = "[ERROR]"
+ERROR   = "[ERROR]"
+DIST    = "[PKG]"
 
 # 包含公共定义
 include Makefile.common
