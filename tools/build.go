@@ -95,7 +95,7 @@ func getAppName() string {
 	if name := os.Getenv("COMMANDS"); name != "" {
 		return name
 	}
-	return "your-go-project"
+	return "your-app"
 }
 
 // getVersion 从环境变量 "VERSION" 中获取版本号，如果未设置，则尝试从 git 获取。

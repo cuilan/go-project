@@ -1,0 +1,184 @@
+# Copyright The Authors.
+# Common Makefile definitions shared between main Makefile and Makefile.windows
+
+# ************************************************************************************
+# 公共配置变量
+# ************************************************************************************
+
+PKG=github.com/cuilan/go-project
+
+# 应用名称，应与 cmd/ 目录下的子目录名一致
+APP_NAME := your-app
+
+# ************************************************************************************
+
+# 获取当前工程绝对路径
+ROOTDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+# 主包路径
+MAIN_PACKAGE := $(ROOTDIR)/cmd/$(APP_NAME)
+
+# ====================================================================================
+# 平台定义
+# ====================================================================================
+
+# MacOS
+DARWIN_AMD64 := darwin/amd64
+DARWIN_ARM64 := darwin/arm64
+DARWIN := $(DARWIN_AMD64) $(DARWIN_ARM64)
+
+# Linux
+LINUX_386 := linux/386
+LINUX_AMD64 := linux/amd64
+LINUX_ARM := linux/arm
+LINUX_ARM64 := linux/arm64
+LINUX := $(LINUX_386) $(LINUX_AMD64) $(LINUX_ARM) $(LINUX_ARM64)
+
+# Windows
+WINDOWS_386 := windows/386
+WINDOWS_AMD64 := windows/amd64
+WINDOWS_ARM := windows/arm
+WINDOWS_ARM64 := windows/arm64
+WINDOWS := $(WINDOWS_386) $(WINDOWS_AMD64) $(WINDOWS_ARM) $(WINDOWS_ARM64)
+
+# 平台组合
+ALL_32 := $(LINUX_386) $(WINDOWS_386)
+ALL_64 := $(DARWIN_AMD64) $(LINUX_AMD64) $(WINDOWS_AMD64)
+ALL_ARM := $(LINUX_ARM) $(WINDOWS_ARM)
+ALL_ARM64 := $(DARWIN_ARM64) $(LINUX_ARM64) $(WINDOWS_ARM64)
+ALL_PLATFORMS := $(ALL_32) $(ALL_64) $(ALL_ARM) $(ALL_ARM64)
+
+# ====================================================================================
+# Git 相关变量
+# ====================================================================================
+
+# 从 git tag 获取语义版本号
+GIT_VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
+# 获取 git 分支
+GIT_REVISION := $(shell git rev-parse --abbrev-ref HEAD)
+# 获取 git commit hash (短格式)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+
+# ====================================================================================
+# Go 相关命令
+# ====================================================================================
+
+GO := go
+GOFMT := gofmt
+
+# 当前平台
+CURRENT_PLATFORM := $(shell go env GOOS)/$(shell go env GOARCH)
+
+# ====================================================================================
+# 公共函数
+# ====================================================================================
+
+# 检查文件是否存在
+define check_file_exists
+	@if [ ! -f $(1) ]; then \
+		echo "$(ERROR)  File $(1) not found."; \
+		exit 1; \
+	fi
+endef
+
+# 创建目录
+define create_dir
+	@mkdir -p $(1)
+endef
+
+# 清理目录
+define clean_dir
+	@rm -rf $(1)
+endef
+
+# ====================================================================================
+# 公共目标
+# ====================================================================================
+
+.PHONY: version mod-tidy mod-download install-tools help
+
+version: ## 显示版本信息
+	@echo "$(WHALE) $@"
+	@echo "ROOTDIR: $(ROOTDIR)"
+	@echo "APP_NAME: $(APP_NAME)"
+	@echo "git tag: $(GIT_VERSION)"
+	@echo "git branch: $(GIT_REVISION)"
+	@echo "git commit: $(GIT_COMMIT)"
+	@$(GO) run $(MAIN_PACKAGE) --version
+
+mod-tidy: ## 整理 go.mod 文件
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Tidying go.mod..."
+	@$(GO) mod tidy
+	@echo "$(OK)  go.mod tidied."
+
+mod-download: ## 下载模块到本地缓存
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Downloading dependencies..."
+
+install-tools: ## 安装代码检查等开发工具
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Installing development tools (staticcheck)..."
+	@$(GO) install honnef.co/go/tools/cmd/staticcheck@latest
+	@echo "$(OK)  Tools installation completed."
+
+# ====================================================================================
+# 测试相关目标
+# ====================================================================================
+
+test: ## 运行所有单元测试
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Running unit tests..."
+	@$(GO) test -v ./...
+	@echo "$(OK)  Tests completed."
+
+test-cover: ## 运行测试并生成 HTML 覆盖率报告
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Generating code coverage report..."
+	@$(GO) test -v -cover -coverprofile=coverage.out ./...
+	@$(GO) tool cover -html=coverage.out -o coverage.html
+	@echo "$(OK)  Coverage report generated: coverage.html"
+
+# ====================================================================================
+# 代码质量检查
+# ====================================================================================
+
+lint: ## 运行所有代码检查器
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Running code formatting check..."
+	@$(GOFMT) -l -w .
+	@echo "$(RUN)  Running go vet..."
+	@$(GO) vet ./...
+	@echo "$(RUN)  Running staticcheck..."
+	@staticcheck ./...
+	@echo "$(OK)  All code checks completed."
+
+# ====================================================================================
+# 依赖管理
+# ====================================================================================
+
+mod-vendor: mod-tidy ## 更新 vendor 目录
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Updating vendor directory..."
+	@$(GO) mod vendor
+	@echo "$(OK)  Vendor directory updated."
+
+# ====================================================================================
+# 运行相关目标
+# ====================================================================================
+
+run: ## 运行应用程序
+	@echo "$(WHALE) $@"
+	@$(GO) run $(MAIN_PACKAGE) --config-dir ./configs
+	@echo "$(OK)  Run completed."
+
+# ====================================================================================
+# 帮助信息
+# ====================================================================================
+
+help: ## 显示此帮助信息
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Available targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+.DEFAULT_GOAL := help 

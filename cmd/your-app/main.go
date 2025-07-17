@@ -1,4 +1,4 @@
-//go:build (darwin && amd64) || (linux && amd64) || (darwin && arm64)
+//go:build darwin || linux
 
 package main
 
@@ -12,6 +12,6 @@ func main() {
 
 // shutdownHook 是应用关闭时的钩子函数，用于执行一些清理操作
 func shutdownHook() {
-	slog.Info("应用程序关闭，发送消息...")
+	slog.Info("应用程序关闭，执行钩子...")
 	slog.Info("Shutting down server...")
 }

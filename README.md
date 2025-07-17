@@ -21,7 +21,7 @@
 .
 ├── bin/                      # (本地开发) 编译后的二进制文件 (被 .gitignore 忽略)
 ├── cmd/                      # 项目主程序的入口
-│   └── your-go-project/
+│   └── your-app/
 ├── configs/                  # 配置文件模板
 ├── dist/                     # (打包分发) 生成的 .zip 分发包 (被 .gitignore 忽略)
 ├── init/                     # 部署和初始化脚本
@@ -85,6 +85,8 @@ make dist
 
 ## 🛠️ Makefile 命令详解
 
+### 通用命令（适用于所有平台）
+
 - `make all`: 默认目标，等同于 `make build`。
 - `make build`: 为所有在 `PLATFORMS` 变量中定义的目标平台进行交叉编译。
 - `make dist`: 构建并为每个平台打包成一个可分发的 `.zip` 文件。
@@ -97,6 +99,30 @@ make dist
 - `make mod-download`: 下载依赖到本地模块缓存。
 - `make install-tools`: 安装项目依赖的开发工具。
 - `make help`: 显示所有可用的 `make` 命令及其说明。
+
+### Windows 特定命令
+
+在 Windows 环境下，建议使用 `Makefile.windows`：
+
+```cmd
+# 基本构建命令
+make -f Makefile.windows build
+make -f Makefile.windows build-all
+make -f Makefile.windows dist
+
+# Windows 服务管理
+make -f Makefile.windows install-service
+make -f Makefile.windows start-service
+make -f Makefile.windows stop-service
+make -f Makefile.windows restart-service
+make -f Makefile.windows uninstall-service
+
+# 或使用批处理文件
+make-windows.bat build
+make-windows.bat install-service
+```
+
+详细说明请参考 [Windows 平台构建指南](README-Windows.md)。
 
 ## 部署指南
 
@@ -113,6 +139,33 @@ make dist
 6.  使用 `systemctl status your-go-project.service` 检查服务状态。
 
 ### Windows (服务)
+
+#### 方法一：使用 Makefile.windows（推荐）
+
+1. 在 Windows 环境下，使用专门的 `Makefile.windows` 进行构建：
+   ```cmd
+   # 构建 Windows 二进制文件
+   make -f Makefile.windows build
+   
+   # 安装 Windows 服务（需要管理员权限）
+   make -f Makefile.windows install-service
+   
+   # 管理服务
+   make -f Makefile.windows start-service
+   make -f Makefile.windows stop-service
+   make -f Makefile.windows restart-service
+   make -f Makefile.windows uninstall-service
+   ```
+
+2. 或者使用提供的批处理文件：
+   ```cmd
+   make-windows.bat build
+   make-windows.bat install-service
+   ```
+
+3. 详细说明请参考 [Windows 平台构建指南](README-Windows.md)。
+
+#### 方法二：使用传统方式
 
 1.  将对应 Windows 平台的 `.zip` 包解压。
 2.  进入解压后的 `release/init/windows` 目录。

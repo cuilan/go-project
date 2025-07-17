@@ -1,4 +1,4 @@
-# GORM 框架配置
+# GORM 框架配置 (如果提供了此部分，orm 模块将被自动初始化)
 gorm:
   # 数据库驱动，与 go-sql 中的 driver 保持一致
   # 支持: mysql, postgres, sqlite3, sqlserver
@@ -10,6 +10,12 @@ gorm:
   # PostgreSQL:    "host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable"
   # SQLite:        "gorm.db"
   dsn: "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
+
+  # --- 连接池配置 (通用) ---
+  max_open_conns: 20 # 最大打开连接数
+  max_idle_conns: 10 # 最大空闲连接数
+  conn_max_lifetime: 3600 # 连接最大生命周期(秒)
+  conn_max_idle_time: 3600 # 连接最大空闲时间(秒)
 
   # GORM 相关配置
   config:

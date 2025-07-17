@@ -54,10 +54,10 @@ func RunApp(shutdownHook func()) error {
 
 	rdb.GetRedis().Set(context.Background(), "name", "zhangyan", 0*time.Second)
 	value := rdb.GetRedis().Get(context.Background(), "name")
-	slog.Debug("debug value", "value", value)
-	slog.Info("info value", "value", value)
-	slog.Warn("warn value", "value", value)
-	slog.Error("error value", "value", value)
+	slog.Debug("debug", "value", value.Val())
+	slog.Info("info", "value", value.Val())
+	slog.Warn("warn", "value", value.Val())
+	slog.Error("error", "value", value.Val())
 
 	// ===== 业务逻辑写在上面 =====
 
