@@ -10,22 +10,106 @@ WARNING = "[WARN]"
 ERROR   = "[ERROR]"
 DIST    = "[PKG]"
 
-# 包含公共定义
-include Makefile.common
-
-# Windows 主包文件
-MAIN_FILE := $(MAIN_PACKAGE)/main_windows.go
-
 # ====================================================================================
-# Windows 特定配置
+# Windows
+# Installation path, not recommended to modify
 # ====================================================================================
 
-# Windows 特定的路径配置
 PREFIX        ?= C:/Program Files/$(APP_NAME)
 BINDIR        ?= $(PREFIX)/bin
 DATADIR       ?= $(PREFIX)/share
 DOCDIR        ?= $(DATADIR)/doc
 MANDIR        ?= $(DATADIR)/man
+
+CLEAN_CMD = rmdir /s /q
+
+# Main package file
+MAIN_FILE := $(MAIN_PACKAGE)/main_windows.go
+
+# ====================================================================================
+# Common functions
+# ====================================================================================
+
+# Check if file exists
+define check_file_exists
+	@if not exist "$(1)" ( \
+		echo "$(ERROR)  File $(1) not found." && \
+		exit /b 1 \
+	)
+endef
+
+# Create directory
+define create_dir
+	@if not exist "$(1)" mkdir "$(1)"
+endef
+
+# Clean directory
+define clean_dir
+	@if exist "$(1)" rmdir /s /q "$(1)"
+endef
+
+# Check if directory exists
+define check_dir_exists
+	@if not exist "$(1)" ( \
+		echo "$(ERROR)  Directory $(1) not found." && \
+		exit /b 1 \
+	)
+endef
+
+# Copy file with error handling
+define copy_file
+	@if exist "$(1)" ( \
+		copy "$(1)" "$(2)" >nul && \
+		echo "$(OK)  Copied $(1) to $(2)" \
+	) else ( \
+		echo "$(ERROR)  Source file $(1) not found." && \
+		exit /b 1 \
+	)
+endef
+
+# Copy directory recursively
+define copy_dir
+	@if exist "$(1)" ( \
+		xcopy "$(1)" "$(2)" /e /i /q >nul && \
+		echo "$(OK)  Copied directory $(1) to $(2)" \
+	) else ( \
+		echo "$(ERROR)  Source directory $(1) not found." && \
+		exit /b 1 \
+	)
+endef
+
+# Check if command exists
+define check_command_exists
+	@where $(1) >nul 2>&1 || ( \
+		echo "$(ERROR)  Command $(1) not found in PATH." && \
+		exit /b 1 \
+	)
+endef
+
+# Get file size in bytes
+define get_file_size
+	@for %%A in ("$(1)") do echo %%~zA
+endef
+
+# Check if service exists
+define check_service_exists
+	@sc query "$(1)" >nul 2>&1 || ( \
+		echo "$(WARNING)  Service $(1) not found." && \
+		exit /b 1 \
+	)
+endef
+
+# Check if service is running
+define check_service_running
+	@sc query "$(1)" | find "RUNNING" >nul 2>&1 || ( \
+		echo "$(WARNING)  Service $(1) is not running." && \
+		exit /b 1 \
+	)
+endef
+
+# ====================================================================================
+# Windows 特定配置
+# ====================================================================================
 
 # Windows 服务相关配置
 SERVICE_NAME := $(APP_NAME)
@@ -37,33 +121,11 @@ PLATFORMS := $(WINDOWS_AMD64)
 
 # ====================================================================================
 
-.PHONY: all build build-all dist run-bin clean install-service uninstall-service start-service stop-service restart-service
+.PHONY: dist run-bin clean install-service uninstall-service start-service stop-service restart-service
 
 # ====================================================================================
 # 核心构建与分发
 # ====================================================================================
-
-all: build-all ## 构建所有 Windows 平台的二进制文件
-
-build: ## 构建当前 Windows 平台的二进制文件
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Building for current Windows platform ($(CURRENT_PLATFORM)) (version: $(GIT_VERSION)-$(GIT_COMMIT))..."
-	@set PLATFORMS="$(CURRENT_PLATFORM)" && \
-	set COMMANDS="$(APP_NAME)" && \
-	set VERSION="$(GIT_VERSION)" && \
-	set COMMIT="$(GIT_COMMIT)" && \
-	$(GO) run ./tools/build.go
-	@echo "$(OK)  Build completed. Output located in bin/ directory."
-
-build-all: ## 构建所有 Windows 平台的二进制文件
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Starting Windows build (version: $(GIT_VERSION)-$(GIT_COMMIT))..."
-	@set PLATFORMS="$(PLATFORMS)" && \
-	set COMMANDS="$(APP_NAME)" && \
-	set VERSION="$(GIT_VERSION)" && \
-	set COMMIT="$(GIT_COMMIT)" && \
-	$(GO) run ./tools/build.go
-	@echo "$(OK)  Windows build completed. Output located in bin/ directory."
 
 dist: build-all ## 构建并打包成 Windows ZIP 可分发文件
 	@echo "$(WHALE) $@"
@@ -88,16 +150,6 @@ dist: build-all ## 构建并打包成 Windows ZIP 可分发文件
 		) \
 	)
 	@echo "$(OK)  Windows ZIP distribution packages created successfully in dist/ directory."
-
-# ====================================================================================
-# 运行
-# ====================================================================================
-
-run-bin: build ## 运行可执行文件
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Running executable file..."
-	@bin\$(APP_NAME)*.exe --config-dir ./configs
-	@echo "$(OK)  Run completed."
 
 # ====================================================================================
 # Windows 服务管理
@@ -134,17 +186,3 @@ stop-service: ## 停止 Windows 服务
 	@echo "$(OK)  Windows service stopped successfully."
 
 restart-service: stop-service start-service ## 重启 Windows 服务
-
-# ====================================================================================
-# 清理
-# ====================================================================================
-
-clean: ## 清理构建产物和临时文件
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Cleaning..."
-	@if exist bin rmdir /s /q bin
-	@if exist dist rmdir /s /q dist
-	@if exist coverage.html del coverage.html
-	@if exist coverage.out del coverage.out
-	@if exist logs rmdir /s /q logs
-	@echo "$(OK)  Cleanup completed." 

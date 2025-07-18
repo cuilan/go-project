@@ -9,6 +9,12 @@ ERROR   = "❌"
 DIST    = "📦"
 
 # ====================================================================================
+# Main package file
+# ====================================================================================
+
+MAIN_FILE := $(MAIN_PACKAGE)/main.go
+
+# ====================================================================================
 # Installation path, not recommended to modify
 # ====================================================================================
 
@@ -18,14 +24,14 @@ DATADIR       ?= $(PREFIX)/share
 DOCDIR        ?= $(DATADIR)/doc
 MANDIR        ?= $(DATADIR)/man
 
-CLEAN_CMD = rm -rf
-
-# Main package file
-MAIN_FILE := $(MAIN_PACKAGE)/main.go
-
 # ====================================================================================
 # Common functions
 # ====================================================================================
+
+EXE_SUFFIX = .exe
+RM = rm -f
+RMDIR = rm -rf
+
 
 # Check if file exists
 define check_file_exists
