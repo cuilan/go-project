@@ -9,6 +9,12 @@ ERROR   = "❌"
 DIST    = "📦"
 
 # ====================================================================================
+# Main package file
+# ====================================================================================
+
+MAIN_FILE := $(MAIN_PACKAGE)/main.go
+
+# ====================================================================================
 # Installation path, not recommended to modify
 # ====================================================================================
 
@@ -18,29 +24,17 @@ DATADIR       ?= $(PREFIX)/share
 DOCDIR        ?= $(DATADIR)/doc
 MANDIR        ?= $(DATADIR)/man
 
-CLEAN_CMD = rm -rf
-
-# Main package file
-MAIN_FILE := $(MAIN_PACKAGE)/main.go
-
 # ====================================================================================
 # Common functions
 # ====================================================================================
 
-# Check if file exists
-define check_file_exists
-	@if [ ! -f $(1) ]; then \
-		echo "$(ERROR)  File $(1) not found."; \
-		exit 1; \
-	fi
-endef
+EXE_SUFFIX = 
 
-# Create directory
-define create_dir
-	@mkdir -p $(1)
-endef
+RM = rm -f
+RMDIR = rm -rf
 
-# Clean directory
-define clean_dir
-	@rm -rf $(1)
-endef
+MKDIR = mkdir
+MKDIR_P = mkdir -p
+
+CP = cp
+CP_R = cp -r

@@ -28,25 +28,13 @@ MANDIR        ?= $(DATADIR)/man
 # Common functions
 # ====================================================================================
 
-EXE_SUFFIX = .exe
+EXE_SUFFIX = 
+
 RM = rm -f
 RMDIR = rm -rf
 
+MKDIR = mkdir
+MKDIR_P = mkdir -p
 
-# Check if file exists
-define check_file_exists
-	@if [ ! -f $(1) ]; then \
-		echo "$(ERROR)  File $(1) not found."; \
-		exit 1; \
-	fi
-endef
-
-# Create directory
-define create_dir
-	@mkdir -p $(1)
-endef
-
-# Clean directory
-define clean_dir
-	@rm -rf $(1)
-endef
+CP = cp
+CP_R = cp -r

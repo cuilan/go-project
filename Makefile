@@ -208,10 +208,19 @@ build-all: ## Build for all platforms
 
 dist: build-all ## Build and package as ZIP distribution
 	@echo "$(WHALE) $@"
-	$(call create_dir,dist)
+	@$(MKDIR_P) dist
 	@echo "$(RUN)  Creating distribution packages..."
+ifeq ($(GOOS),windows)
+	@$(call windows_cross_build_zip)
+else
+	@$(call unix_cross_build_zip)
+endif
+	@echo "$(OK)  Distribution packages created successfully in dist/ directory."
+
+# Define cross-build zip for Unix platforms
+define unix_cross_build_zip
 	@for p in $(PLATFORMS); do \
-		echo "  $(DIST) Processing platform: $$p"; \
+		echo " →  $(DIST) Processing platform: $$p"; \
 		GOOS=`echo $$p | cut -d'/' -f1`; \
 		GOARCH=`echo $$p | cut -d'/' -f2`; \
 		VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_$${GOOS}_$${GOARCH}; \
@@ -234,7 +243,7 @@ dist: build-all ## Build and package as ZIP distribution
 		zip -r dist/$$VERSIONED_APP_NAME.zip dist/$$VERSIONED_APP_NAME > /dev/null; \
 		echo "    $(OK) Platform $$p completed"; \
 	done
-	@echo "$(OK)  Distribution packages created successfully in dist/ directory."
+endef
 
 # ====================================================================================
 # Run
@@ -258,11 +267,11 @@ run-bin: build ## Run executable file
 clean: ## Clean build artifacts and temporary files
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Cleaning..."
-	@$(call clean_dir,bin)
-	@$(call clean_dir,dist)
-	@$(call clean_dir,coverage.html)
-	@$(call clean_dir,coverage.out)
-	@$(call clean_dir,logs)
+	@$(RMDIR) bin
+	@$(RMDIR) dist
+	@$(RM) coverage.html
+	@$(RM) coverage.out
+	@$(RMDIR) logs
 	@echo "$(OK)  Cleanup completed."
 
 # ====================================================================================

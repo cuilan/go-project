@@ -1,7 +1,5 @@
 # Copyright The Authors.
-# Windows-specific Makefile for Go Project
 
-# Windows 平台特定的图标和标识
 WHALE   = "[BUILD]"
 RUN     = "[RUN]"
 OK      = "[OK]"
@@ -11,8 +9,13 @@ ERROR   = "[ERROR]"
 DIST    = "[PKG]"
 
 # ====================================================================================
-# Windows
-# Installation path, not recommended to modify
+# Main package file for Windows
+# ====================================================================================
+
+MAIN_FILE := $(MAIN_PACKAGE)/main_windows.go
+
+# ====================================================================================
+# Windows Installation path, not recommended to modify
 # ====================================================================================
 
 PREFIX        ?= C:/Program Files/$(APP_NAME)
@@ -21,91 +24,20 @@ DATADIR       ?= $(PREFIX)/share
 DOCDIR        ?= $(DATADIR)/doc
 MANDIR        ?= $(DATADIR)/man
 
-CLEAN_CMD = rmdir /s /q
-
-# Main package file
-MAIN_FILE := $(MAIN_PACKAGE)/main_windows.go
-
 # ====================================================================================
 # Common functions
 # ====================================================================================
 
-# Check if file exists
-define check_file_exists
-	@if not exist "$(1)" ( \
-		echo "$(ERROR)  File $(1) not found." && \
-		exit /b 1 \
-	)
-endef
+EXE_SUFFIX = .exe
 
-# Create directory
-define create_dir
-	@if not exist "$(1)" mkdir "$(1)"
-endef
+RM = del /q
+RMDIR = rmdir /s /q
 
-# Clean directory
-define clean_dir
-	@if exist "$(1)" rmdir /s /q "$(1)"
-endef
+MKDIR = mkdir
+MKDIR_P = if not exist $(1) mkdir $(1)
 
-# Check if directory exists
-define check_dir_exists
-	@if not exist "$(1)" ( \
-		echo "$(ERROR)  Directory $(1) not found." && \
-		exit /b 1 \
-	)
-endef
-
-# Copy file with error handling
-define copy_file
-	@if exist "$(1)" ( \
-		copy "$(1)" "$(2)" >nul && \
-		echo "$(OK)  Copied $(1) to $(2)" \
-	) else ( \
-		echo "$(ERROR)  Source file $(1) not found." && \
-		exit /b 1 \
-	)
-endef
-
-# Copy directory recursively
-define copy_dir
-	@if exist "$(1)" ( \
-		xcopy "$(1)" "$(2)" /e /i /q >nul && \
-		echo "$(OK)  Copied directory $(1) to $(2)" \
-	) else ( \
-		echo "$(ERROR)  Source directory $(1) not found." && \
-		exit /b 1 \
-	)
-endef
-
-# Check if command exists
-define check_command_exists
-	@where $(1) >nul 2>&1 || ( \
-		echo "$(ERROR)  Command $(1) not found in PATH." && \
-		exit /b 1 \
-	)
-endef
-
-# Get file size in bytes
-define get_file_size
-	@for %%A in ("$(1)") do echo %%~zA
-endef
-
-# Check if service exists
-define check_service_exists
-	@sc query "$(1)" >nul 2>&1 || ( \
-		echo "$(WARNING)  Service $(1) not found." && \
-		exit /b 1 \
-	)
-endef
-
-# Check if service is running
-define check_service_running
-	@sc query "$(1)" | find "RUNNING" >nul 2>&1 || ( \
-		echo "$(WARNING)  Service $(1) is not running." && \
-		exit /b 1 \
-	)
-endef
+CP = copy
+CP_R = xcopy /E /I /Y
 
 # ====================================================================================
 # Windows 特定配置
