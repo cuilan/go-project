@@ -51,7 +51,12 @@ func buildForPlatform(platform, appName, version, commit, buildDir string, wg *s
 	goos, goarch := parts[0], parts[1]
 
 	// 构造输出文件名
-	outputName := fmt.Sprintf("%s_%s_%s_%s_%s", appName, version, commit, goos, goarch)
+	var outputName string
+	if commit != "" {
+		outputName = fmt.Sprintf("%s_%s_%s_%s_%s", appName, version, commit, goos, goarch)
+	} else {
+		outputName = fmt.Sprintf("%s_%s_%s_%s", appName, version, goos, goarch)
+	}
 	if goos == "windows" {
 		outputName += ".exe"
 	}
@@ -117,13 +122,7 @@ func getCommit() string {
 	if c := os.Getenv("COMMIT"); c != "" {
 		return c
 	}
-	// 尝试从 git rev-parse 获取
-	cmd := exec.Command("git", "rev-parse", "--short", "HEAD")
-	out, err := cmd.Output()
-	if err != nil {
-		return "unknown"
-	}
-	return strings.TrimSpace(string(out))
+	return ""
 }
 
 // createBuildDir 创建用于存放构建产物的目录。

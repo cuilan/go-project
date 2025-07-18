@@ -85,6 +85,7 @@ ALL_PLATFORMS := $(ALL_32) $(ALL_64) $(ALL_ARM) $(ALL_ARM64)
 # All platforms
 # PLATFORMS := $(ALL_PLATFORMS)
 PLATFORMS := $(ALL_64)
+# PLATFORMS := $(WINDOWS_AMD64)
 
 # ====================================================================================
 # Git related variables
@@ -95,7 +96,8 @@ GIT_VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//'
 # Get git branch
 GIT_REVISION := $(shell git rev-parse --abbrev-ref HEAD)
 # Get git commit hash (short format)
-GIT_COMMIT := $(shell git rev-parse --short HEAD)
+# GIT_COMMIT := $(shell git rev-parse --short HEAD)
+GIT_COMMIT :=
 
 # ====================================================================================
 # Go related commands
@@ -208,22 +210,22 @@ build-all: ## Build for all platforms
 
 dist: build-all ## Build and package as ZIP distribution
 	@echo "$(WHALE) $@"
-	@$(MKDIR_P) dist
+	@mkdir -p dist
 	@echo "$(RUN)  Creating distribution packages..."
 ifeq ($(GOOS),windows)
-	@$(call windows_cross_build_zip)
+	@$(call cross_build)
 else
-	@$(call unix_cross_build_zip)
+	@$(call cross_build_zip)
 endif
 	@echo "$(OK)  Distribution packages created successfully in dist/ directory."
 
-# Define cross-build zip for Unix platforms
-define unix_cross_build_zip
+# Define cross-build zip for all platforms
+define cross_build_zip
 	@for p in $(PLATFORMS); do \
-		echo " →  $(DIST) Processing platform: $$p"; \
+		echo " $(DO)  $(DIST) Processing platform: $$p"; \
 		GOOS=`echo $$p | cut -d'/' -f1`; \
 		GOARCH=`echo $$p | cut -d'/' -f2`; \
-		VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_$${GOOS}_$${GOARCH}; \
+		VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$${GOOS}_$${GOARCH}; \
 		BINARY_NAME=$(APP_NAME); \
 		EXT=""; \
 		if [ "$${GOOS}" = "windows" ]; then \
@@ -238,9 +240,37 @@ define unix_cross_build_zip
 		echo "    Copying configs directory..."; \
 		cp -r configs dist/$$VERSIONED_APP_NAME/configs; \
 		echo "    Copying init directory..."; \
-		cp -r init dist/$$VERSIONED_APP_NAME/init; \
+		cp -r init/linux/* dist/$$VERSIONED_APP_NAME; \
+		cp -r init/windows/* dist/$$VERSIONED_APP_NAME; \
 		echo "    Creating zip file..."; \
 		zip -r dist/$$VERSIONED_APP_NAME.zip dist/$$VERSIONED_APP_NAME > /dev/null; \
+		echo "    $(OK) Platform $$p completed"; \
+	done
+endef
+
+# Define cross-build for all platforms
+define cross_build
+	@for p in $(PLATFORMS); do \
+		echo " $(DO)  $(DIST) Processing platform: $$p"; \
+		GOOS=`echo $$p | cut -d'/' -f1`; \
+		GOARCH=`echo $$p | cut -d'/' -f2`; \
+		VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$${GOOS}_$${GOARCH}; \
+		BINARY_NAME=$(APP_NAME); \
+		EXT=""; \
+		if [ "$${GOOS}" = "windows" ]; then \
+			BINARY_NAME=$(APP_NAME).exe; \
+			EXT=".exe"; \
+		fi; \
+		echo "    Creating $$VERSIONED_APP_NAME directory..."; \
+		mkdir -p dist/$$VERSIONED_APP_NAME; \
+		mkdir -p dist/$$VERSIONED_APP_NAME/bin; \
+		echo "    Copying binary file..."; \
+		cp bin/$$VERSIONED_APP_NAME$$EXT dist/$$VERSIONED_APP_NAME/bin/$$BINARY_NAME; \
+		echo "    Copying configs directory..."; \
+		cp -r configs dist/$$VERSIONED_APP_NAME/configs; \
+		echo "    Copying init directory..."; \
+		cp -r init/linux/* dist/$$VERSIONED_APP_NAME; \
+		cp -r init/windows/* dist/$$VERSIONED_APP_NAME; \
 		echo "    $(OK) Platform $$p completed"; \
 	done
 endef
@@ -267,11 +297,11 @@ run-bin: build ## Run executable file
 clean: ## Clean build artifacts and temporary files
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Cleaning..."
-	@$(RMDIR) bin
-	@$(RMDIR) dist
-	@$(RM) coverage.html
-	@$(RM) coverage.out
-	@$(RMDIR) logs
+	@rm -rf bin
+	@rm -rf dist
+	@rm -f coverage.html
+	@rm -f coverage.out
+	@rm -rf logs
 	@echo "$(OK)  Cleanup completed."
 
 # ====================================================================================
@@ -282,6 +312,6 @@ help: ## Show this help information
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Available targets:"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
 .DEFAULT_GOAL := help

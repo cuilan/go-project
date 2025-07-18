@@ -85,9 +85,11 @@ func main() {
 	}
 
 	// 作为 Windows 服务运行
+	fmt.Println("正在以服务模式运行。")
 	var errElog error
 	elog, errElog = eventlog.Open(getExeBaseName())
 	if errElog != nil {
+		elog.Error(1, fmt.Sprintf("无法记录日志: %v", errElog))
 		return // 无法记录日志，直接退出
 	}
 	defer elog.Close()

@@ -1,35 +1,57 @@
 @echo off
-REM --- 此脚本用于将应用程序安装为 Windows 服务。 ---
-REM --- 必须以管理员权限运行。 ---
+REM --- This script is used to install the application as a Windows service. ---
+REM --- Must be run with administrator privileges. ---
 
-SET "SERVICE_NAME=YourGoProject"
-SET "SERVICE_DISPLAY_NAME=Your Go Project Service"
-SET "SERVICE_DESCRIPTION=这是一个 Go 模板项目的服务。"
+SET "SERVICE_NAME=your-app"
+SET "SERVICE_DISPLAY_NAME=Your App Service"
+SET "SERVICE_DESCRIPTION=This is a your app service."
 
-REM --- 智能查找可执行文件的完整路径 ---
-REM %~dp0 是批处理文件所在的目录，我们假定它在 'release\init\windows'
-SET "RELEASE_ROOT=%~dp0..\\"
-SET "EXE_PATH="
-FOR /f "delims=" %%F IN ('dir /b /a-d "%RELEASE_ROOT%%SERVICE_NAME%*.exe"') DO SET "EXE_PATH=%RELEASE_ROOT%%%F"
+REM --- Intelligently find the full path of the executable file ---
+SET "RELEASE_ROOT=%~dp0"
+SET "BIN_PATH=%RELEASE_ROOT%bin"
+IF NOT EXIST "%BIN_PATH%" (
+    echo Error: bin directory not found at %BIN_PATH%
+    echo Please ensure the package has been extracted correctly.
+    pause
+    exit /b 1
+)
 
-REM 检查可执行文件是否存在
+SET "EXE_PATH=%BIN_PATH%\%SERVICE_NAME%.exe"
+IF NOT EXIST "%EXE_PATH%" (
+    echo Error: %SERVICE_NAME%.exe executable file not found at %EXE_PATH%
+    echo Please ensure the package has been extracted correctly and the executable is in the bin/ directory.
+    pause
+    exit /b 1
+)
+
+REM Check if the executable file exists
 IF "%EXE_PATH%"=="" (
-    echo 错误: 在 %RELEASE_ROOT% 未找到 %SERVICE_NAME%*.exe 可执行文件。
-    echo 请确保压缩包已正确解压。
+    echo Error: %SERVICE_NAME%.exe executable file not found in %RELEASE_ROOT%\bin\
+    echo Please ensure the package has been extracted correctly and the executable is in the bin/ directory.
+    pause
+    exit /b 1
+)
+
+REM Check if configs directory exists
+SET "CONFIG_DIR=%RELEASE_ROOT%configs"
+IF NOT EXIST "%CONFIG_DIR%" (
+    echo Error: configs directory not found at %CONFIG_DIR%
+    echo Please ensure the package has been extracted correctly.
     pause
     exit /b 1
 )
 
 ECHO ===============================================
-ECHO 正在安装服务: %SERVICE_DISPLAY_NAME%
-ECHO 服务名称: %SERVICE_NAME%
-ECHO 可执行文件路径: %EXE_PATH%
+ECHO Installing service: %SERVICE_DISPLAY_NAME%
+ECHO Service name: %SERVICE_NAME%
+ECHO Executable path: %EXE_PATH%
+ECHO Configs path: %CONFIG_DIR%
 ECHO ===============================================
 
-sc create "%SERVICE_NAME%" binPath= "\"%EXE_PATH%\"" start= auto DisplayName= "%SERVICE_DISPLAY_NAME%"
+sc create "%SERVICE_NAME%" binPath= "\"%EXE_PATH%\" \"--config-dir\" \"%CONFIG_DIR%\"" start= auto DisplayName= "%SERVICE_DISPLAY_NAME%"
 IF %ERRORLEVEL% NEQ 0 (
     echo.
-    echo 错误: 创建服务失败。请确保以管理员身份运行。
+    echo Error: Failed to create service. Please ensure you are running as administrator.
     pause
     exit /b %ERRORLEVEL%
 )
@@ -39,12 +61,12 @@ sc description "%SERVICE_NAME%" "%SERVICE_DESCRIPTION%"
 sc start "%SERVICE_NAME%"
 IF %ERRORLEVEL% NEQ 0 (
     echo.
-    echo 警告: 服务已安装但无法启动。
-    echo 请检查 Windows 事件查看器中的错误日志。
+    echo Warning: Service has been installed but cannot be started.
+    echo Please check the error logs in Windows Event Viewer.
     pause
 ) ELSE (
     echo.
-    echo 服务 '%SERVICE_DISPLAY_NAME%' 已成功安装并启动。
+    echo Service '%SERVICE_DISPLAY_NAME%' has been successfully installed and started.
 )
 
 pause 

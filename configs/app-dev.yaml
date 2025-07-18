@@ -12,9 +12,9 @@ log:
     console_format: "text"
   # 文件输出配置
   file:
-    enable_file: false
+    enable_file: true
     level: "info"
-    path: "./logs"
+    path: "C:\\logs"
     filename: "default.log"
     add_source: true
     file_format: "json"

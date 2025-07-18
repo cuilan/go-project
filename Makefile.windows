@@ -7,6 +7,7 @@ INFO    = "[INFO]"
 WARNING = "[WARN]"
 ERROR   = "[ERROR]"
 DIST    = "[PKG]"
+DO      = "-"
 
 # ====================================================================================
 # Main package file for Windows
@@ -24,97 +25,4 @@ DATADIR       ?= $(PREFIX)/share
 DOCDIR        ?= $(DATADIR)/doc
 MANDIR        ?= $(DATADIR)/man
 
-# ====================================================================================
-# Common functions
-# ====================================================================================
-
 EXE_SUFFIX = .exe
-
-RM = del /q
-RMDIR = rmdir /s /q
-
-MKDIR = mkdir
-MKDIR_P = if not exist $(1) mkdir $(1)
-
-CP = copy
-CP_R = xcopy /E /I /Y
-
-# ====================================================================================
-# Windows 特定配置
-# ====================================================================================
-
-# Windows 服务相关配置
-SERVICE_NAME := $(APP_NAME)
-SERVICE_DISPLAY_NAME := "Your Go Project Service"
-SERVICE_DESCRIPTION := "Go Project Service for Windows"
-
-# 默认编译平台（Windows 64位）
-PLATFORMS := $(WINDOWS_AMD64)
-
-# ====================================================================================
-
-.PHONY: dist run-bin clean install-service uninstall-service start-service stop-service restart-service
-
-# ====================================================================================
-# 核心构建与分发
-# ====================================================================================
-
-dist: build-all ## 构建并打包成 Windows ZIP 可分发文件
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Creating Windows distribution packages..."
-	@if not exist dist mkdir dist
-	@for %%p in ($(PLATFORMS)) do ( \
-		for /f "tokens=1,2 delims=/" %%a in ("%%p") do ( \
-			set GOOS=%%a && \
-			set GOARCH=%%b && \
-			set VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_%%a_%%b.exe && \
-			set ZIP_NAME=$(APP_NAME)_$(GIT_VERSION)_$(GIT_COMMIT)_%%a_%%b.zip && \
-			echo   [PKG] Packaging %%p... && \
-			if exist dist\staging rmdir /s /q dist\staging && \
-			mkdir dist\staging\release && \
-			copy bin\%%VERSIONED_APP_NAME%% dist\staging\release\$(APP_NAME).exe && \
-			xcopy configs dist\staging\release\configs /e /i /q && \
-			xcopy init dist\staging\release\init /e /i /q && \
-			cd dist\staging && \
-			powershell -command "Compress-Archive -Path release -DestinationPath ..\%%ZIP_NAME%%" && \
-			cd ..\.. && \
-			rmdir /s /q dist\staging \
-		) \
-	)
-	@echo "$(OK)  Windows ZIP distribution packages created successfully in dist/ directory."
-
-# ====================================================================================
-# Windows 服务管理
-# ====================================================================================
-
-install-service: build ## 安装 Windows 服务
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Installing Windows service..."
-	@if not exist bin\$(APP_NAME)*.exe ( \
-		echo "$(ERROR)  Executable not found. Please run 'make build' first." && \
-		exit 1 \
-	)
-	@sc create "$(SERVICE_NAME)" binPath= "%~dp0bin\$(APP_NAME)*.exe --config-dir %~dp0configs" DisplayName= "$(SERVICE_DISPLAY_NAME)" start= auto
-	@sc description "$(SERVICE_NAME)" "$(SERVICE_DESCRIPTION)"
-	@echo "$(OK)  Windows service installed successfully."
-
-uninstall-service: ## 卸载 Windows 服务
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Uninstalling Windows service..."
-	@sc stop "$(SERVICE_NAME)" 2>nul || echo "Service not running"
-	@sc delete "$(SERVICE_NAME)" 2>nul || echo "Service not found"
-	@echo "$(OK)  Windows service uninstalled successfully."
-
-start-service: ## 启动 Windows 服务
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Starting Windows service..."
-	@sc start "$(SERVICE_NAME)"
-	@echo "$(OK)  Windows service started successfully."
-
-stop-service: ## 停止 Windows 服务
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Stopping Windows service..."
-	@sc stop "$(SERVICE_NAME)"
-	@echo "$(OK)  Windows service stopped successfully."
-
-restart-service: stop-service start-service ## 重启 Windows 服务
