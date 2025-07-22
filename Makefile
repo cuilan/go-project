@@ -186,8 +186,6 @@ mod-vendor: mod-tidy ## Update vendor directory
 # Core build and distribution
 # ====================================================================================
 
-all: build-all ## Build all platform binaries to bin/ directory
-
 build: ## Build for current platform
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Building for current platform ($(CURRENT_PLATFORM)) (version: $(GIT_VERSION)-$(GIT_COMMIT))..."
@@ -312,6 +310,21 @@ help: ## Show this help information
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Available targets:"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+	@echo ""
+	@echo "Build targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^(build|build-all|dist):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+	@echo ""
+	@echo "Test targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^(test|test-cover):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+	@echo ""
+	@echo "Run targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^(run|run-bin):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+	@echo ""
+	@echo "Common targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^(version|mod-tidy|mod-download|install-tools|lint|mod-vendor|clean|help):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
 .DEFAULT_GOAL := help
