@@ -310,7 +310,8 @@ clean: ## Clean build artifacts and temporary files
 # ====================================================================================
 
 help: ## Show this help information
-	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Usage: make [target] [app1|app2|...]"
 	@echo ""
 	@echo "Available targets:"
 
