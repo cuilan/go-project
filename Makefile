@@ -7,16 +7,19 @@
 
 PKG=github.com/cuilan/go-project
 
-# 应用名称，应与 cmd/ 目录下的子目录名一致
-# Application name, should match the subdirectory name under cmd/
-APP_NAME := your-app
+# 应用名称列表，应与 cmd/ 目录下的子目录名一致
+# Application names list, should match the subdirectory names under cmd/
+APPS := client server
 
 # ************************************************************************************
 
 # Get current project absolute path
 ROOTDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-# Main package path
-MAIN_PACKAGE := $(ROOTDIR)/cmd/$(APP_NAME)
+# Main package path function
+# 定义一个函数来获取 main package 路径
+define get_main_package
+$(ROOTDIR)/cmd/$(1)
+endef
 
 # ====================================================================================
 # Platform detection and configuration
@@ -113,8 +116,6 @@ CURRENT_PLATFORM := $(shell go env GOOS)/$(shell go env GOARCH)
 # Common targets
 # ====================================================================================
 
-.PHONY: all version mod-tidy mod-download install-tools test test-cover lint mod-vendor run build build-all clean help
-
 version: ## Show version information
 	@echo "$(WHALE) $@"
 	@echo "ROOTDIR: $(ROOTDIR)"
@@ -135,7 +136,7 @@ mod-download: ## Download modules to local cache
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Downloading dependencies..."
 
-install-tools: ## Install code checking development tools
+install-tools: ## Install code checking development tools (staticcheck)
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Installing development tools (staticcheck)..."
 	@$(GO) install honnef.co/go/tools/cmd/staticcheck@latest
@@ -190,7 +191,7 @@ build: ## Build for current platform
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Building for current platform ($(CURRENT_PLATFORM)) (version: $(GIT_VERSION)-$(GIT_COMMIT))..."
 	@PLATFORMS="$(CURRENT_PLATFORM)" \
-	COMMANDS="$(APP_NAME)" \
+	COMMANDS="$(APPS)" \
 	VERSION="$(GIT_VERSION)" \
 	COMMIT="$(GIT_COMMIT)" \
 	$(GO) run ./tools/build.go
@@ -200,34 +201,32 @@ build-all: ## Build for all platforms
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Starting build (version: $(GIT_VERSION)-$(GIT_COMMIT))..."
 	@PLATFORMS="$(PLATFORMS)" \
-	COMMANDS="$(APP_NAME)" \
+	COMMANDS="$(APPS)" \
 	VERSION="$(GIT_VERSION)" \
 	COMMIT="$(GIT_COMMIT)" \
 	$(GO) run ./tools/build.go
 	@echo "$(OK)  Build completed. Output located in bin/ directory."
 
-dist: build-all ## Build and package as ZIP distribution
+dist: build-all ## Build and package distribution
 	@echo "$(WHALE) $@"
 	@mkdir -p dist
 	@echo "$(RUN)  Creating distribution packages..."
-ifeq ($(GOOS),windows)
-	@$(call cross_build)
-else
-	@$(call cross_build_zip)
-endif
+	@for app in $(APPS); do $(call cross_build,$$app); done
 	@echo "$(OK)  Distribution packages created successfully in dist/ directory."
 
-# Define cross-build zip for all platforms
-define cross_build_zip
-	@for p in $(PLATFORMS); do \
-		echo " $(DO)  $(DIST) Processing platform: $$p"; \
+# Define cross-build for all platforms
+define cross_build
+	APP_NAME=$(1); \
+	echo "$(RUN)  binary: $$APP_NAME"; \
+	for p in $(PLATFORMS); do \
+		echo " $(DO)  $(DIST) Processing platform: $$p for app: $$APP_NAME"; \
 		GOOS=`echo $$p | cut -d'/' -f1`; \
 		GOARCH=`echo $$p | cut -d'/' -f2`; \
-		VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$${GOOS}_$${GOARCH}; \
-		BINARY_NAME=$(APP_NAME); \
+		VERSIONED_APP_NAME=$${APP_NAME}_$(GIT_VERSION)_$${GOOS}_$${GOARCH}; \
+		BINARY_NAME=$$VERSIONED_APP_NAME; \
 		EXT=""; \
 		if [ "$${GOOS}" = "windows" ]; then \
-			BINARY_NAME=$(APP_NAME).exe; \
+			BINARY_NAME=$$VERSIONED_APP_NAME.exe; \
 			EXT=".exe"; \
 		fi; \
 		echo "    Creating $$VERSIONED_APP_NAME directory..."; \
@@ -238,38 +237,32 @@ define cross_build_zip
 		echo "    Copying configs directory..."; \
 		cp -r configs dist/$$VERSIONED_APP_NAME/configs; \
 		echo "    Copying init directory..."; \
-		cp -r init/linux/* dist/$$VERSIONED_APP_NAME; \
-		cp -r init/windows/* dist/$$VERSIONED_APP_NAME; \
-		echo "    Creating zip file..."; \
-		zip -r dist/$$VERSIONED_APP_NAME.zip dist/$$VERSIONED_APP_NAME > /dev/null; \
+		if [ "$${GOOS}" = "linux" ]; then \
+			cp -r init/linux/* dist/$$VERSIONED_APP_NAME; \
+		fi; \
+		if [ "$${GOOS}" = "windows" ]; then \
+			cp -r init/windows/* dist/$$VERSIONED_APP_NAME; \
+		fi; \
 		echo "    $(OK) Platform $$p completed"; \
 	done
 endef
 
-# Define cross-build for all platforms
-define cross_build
-	@for p in $(PLATFORMS); do \
-		echo " $(DO)  $(DIST) Processing platform: $$p"; \
+release: dist ## Create release zip packages
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Creating release zip packages..."
+	@for app in $(APPS); do $(call release_zip,$$app); done
+	@echo "$(OK)  Release packages created successfully in dist/ directory."
+
+# Define release_zip for all platforms
+define release_zip
+	APP_NAME=$(1); \
+	for p in $(PLATFORMS); do \
+		echo " $(DO)  $(DIST) Release platform: $$p for app: $$APP_NAME"; \
 		GOOS=`echo $$p | cut -d'/' -f1`; \
 		GOARCH=`echo $$p | cut -d'/' -f2`; \
-		VERSIONED_APP_NAME=$(APP_NAME)_$(GIT_VERSION)_$${GOOS}_$${GOARCH}; \
-		BINARY_NAME=$(APP_NAME); \
-		EXT=""; \
-		if [ "$${GOOS}" = "windows" ]; then \
-			BINARY_NAME=$(APP_NAME).exe; \
-			EXT=".exe"; \
-		fi; \
-		echo "    Creating $$VERSIONED_APP_NAME directory..."; \
-		mkdir -p dist/$$VERSIONED_APP_NAME; \
-		mkdir -p dist/$$VERSIONED_APP_NAME/bin; \
-		echo "    Copying binary file..."; \
-		cp bin/$$VERSIONED_APP_NAME$$EXT dist/$$VERSIONED_APP_NAME/bin/$$BINARY_NAME; \
-		echo "    Copying configs directory..."; \
-		cp -r configs dist/$$VERSIONED_APP_NAME/configs; \
-		echo "    Copying init directory..."; \
-		cp -r init/linux/* dist/$$VERSIONED_APP_NAME; \
-		cp -r init/windows/* dist/$$VERSIONED_APP_NAME; \
-		echo "    $(OK) Platform $$p completed"; \
+		VERSIONED_APP_NAME=$${APP_NAME}_$(GIT_VERSION)_$${GOOS}_$${GOARCH}; \
+		echo "    Creating zip file..."; \
+		zip -r dist/$$VERSIONED_APP_NAME.zip dist/$$VERSIONED_APP_NAME > /dev/null; \
 	done
 endef
 
@@ -277,16 +270,26 @@ endef
 # Run
 # ====================================================================================
 
-run: ## Run application
-	@echo "$(WHALE) $@"
-	@$(GO) run $(MAIN_PACKAGE) --config-dir ./configs
-	@echo "$(OK)  Run completed."
+run: ## Run application (e.g., make run client)
+	@APP=$(word 2,$(MAKECMDGOALS)); \
+	if [ -z "$$APP" ]; then \
+		echo "Error: Please specify the application (e.g., make run client)"; \
+		exit 1; \
+	fi; \
+	$(GO) run $(call get_main_package,$$APP) --config-dir ./configs
+%::
+	@:
 
-run-bin: build ## Run executable file
-	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Running executable file..."
-	./bin/$(APP_NAME)* --config-dir ./configs
-	@echo "$(OK)  Run completed."
+run-bin: build ## Run executable file (e.g., make run-bin client)
+	@APP=$(word 2,$(MAKECMDGOALS)); \
+	if [ -z "$$APP" ]; then \
+		echo "Error: Please specify the application (e.g., make run-bin client)"; \
+		exit 1; \
+	fi; \
+	echo "$(WHALE) $@"; \
+	echo "$(RUN)  Running executable file..."; \
+	./bin/$$APP* --config-dir ./configs; \
+	echo "$(OK)  Run completed."
 
 # ====================================================================================
 # Clean
@@ -313,7 +316,7 @@ help: ## Show this help information
 
 	@echo ""
 	@echo "Build targets:"
-	@awk 'BEGIN {FS = ":.*?## "} /^(build|build-all|dist):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+	@awk 'BEGIN {FS = ":.*?## "} /^(build|build-all|dist|release):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
 	@echo ""
 	@echo "Test targets:"
@@ -326,5 +329,8 @@ help: ## Show this help information
 	@echo ""
 	@echo "Common targets:"
 	@awk 'BEGIN {FS = ":.*?## "} /^(version|mod-tidy|mod-download|install-tools|lint|mod-vendor|clean|help):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+.PHONY:  version mod-tidy mod-download install-tools test test-cover lint mod-vendor run build build-all dist release clean help
+
 
 .DEFAULT_GOAL := help

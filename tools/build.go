@@ -19,7 +19,7 @@ func main() {
 
 	// 从环境变量或默认值获取平台列表
 	platforms := getPlatforms()
-	appName := getAppName()
+	appNames := getAppNames()
 	version := getVersion()
 	commit := getCommit()
 
@@ -30,9 +30,11 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
-	for _, p := range platforms {
-		wg.Add(1)
-		go buildForPlatform(p, appName, version, commit, binDir, &wg)
+	for _, appName := range appNames {
+		for _, p := range platforms {
+			wg.Add(1)
+			go buildForPlatform(p, appName, version, commit, binDir, &wg)
+		}
 	}
 	wg.Wait()
 
@@ -95,12 +97,12 @@ func getPlatforms() []string {
 	return []string{runtime.GOOS + "/" + runtime.GOARCH}
 }
 
-// getAppName 从环境变量 "COMMANDS" 中获取应用名称，如果未设置，则返回默认值。
-func getAppName() string {
-	if name := os.Getenv("COMMANDS"); name != "" {
-		return name
+// getAppNames 从环境变量 "COMMANDS" 中获取应用名称列表，如果未设置，则返回默认值。
+func getAppNames() []string {
+	if names := os.Getenv("COMMANDS"); names != "" {
+		return strings.Split(names, " ")
 	}
-	return "your-app"
+	return []string{"your-app"}
 }
 
 // getVersion 从环境变量 "VERSION" 中获取版本号，如果未设置，则尝试从 git 获取。

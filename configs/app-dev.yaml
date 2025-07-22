@@ -14,7 +14,7 @@ log:
   file:
     enable_file: true
     level: "info"
-    path: "C:\\logs"
+    path: "logs"
     filename: "default.log"
     add_source: true
     file_format: "json"
