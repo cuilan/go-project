@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-project/internal/module"
+	"go-project/internal/orm/gosql"
 	"go-project/internal/rdb"
 )
 
@@ -10,6 +11,7 @@ import (
 // 务必确保模块的 NewModule() 函数无参数，
 // 且返回的 module.Module 实现了 module.Module 接口。
 var InjectModules = []module.Module{
-	rdb.NewModule(),
 	// example: new_module.NewModule(),
+	rdb.NewModule(),
+	gosql.NewModule(),
 }

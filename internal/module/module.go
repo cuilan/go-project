@@ -20,12 +20,11 @@ var modules []Module
 
 // Register 注册一个或多个模块
 func Register(m ...Module) {
-	slog.Info("registering modules...", "count", len(m))
 	for _, module := range m {
 		modules = append(modules, module)
 		slog.Debug("registered", "module", module.Name())
 	}
-	slog.Info("all modules registered")
+	slog.Info("modules registered", "count", len(m))
 }
 
 // InitModules 初始化所有已注册的模块
@@ -38,7 +37,7 @@ func InitModules(v *viper.Viper) {
 		}
 		// 检查配置中是否存在该模块的配置项
 		if v.IsSet(m.Name()) {
-			slog.Info("initializing module", "module", m.Name())
+			slog.Info("initializing", "module", m.Name())
 			if err := m.Init(v); err != nil {
 				slog.Error("module init failed", "module", m.Name(), "err", err)
 				panic(err) // 初始化失败时，直接 panic

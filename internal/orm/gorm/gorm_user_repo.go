@@ -30,3 +30,12 @@ func (r *gormUserRepository) GetByID(ctx context.Context, id uint) (*models.User
 	}
 	return &user, nil
 }
+
+func (r *gormUserRepository) Count(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&models.User{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

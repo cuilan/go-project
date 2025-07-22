@@ -1,7 +1,7 @@
-# go-sql 数据库配置 (如果提供了此部分，go-sql 模块将被自动初始化)
+# gosql 数据库配置 (如果提供了此部分，gosql 模块将被自动初始化)
 # 使用 golang 标准库 database/sql 初始化数据库连接池，支持 mysql, postgres, sqlite3 等数据库
 # 确保配置文件与 ORM 框架解耦，替换底层 ORM 框架时，无需修改配置文件。
-go-sql:
+gosql:
   # ------------------- MySQL (默认启用) -------------------
   # DSN (Data Source Name) 格式: username:password@tcp(host:port)/dbname?charset=utf8mb4&parseTime=True&loc=Local
   driver: "mysql"
@@ -42,4 +42,4 @@ go-sql:
     # GORM 日志级别: silent, info, warn, error
     log_level: "info"
     # 慢查询阈值 (毫秒)
-    slow_threshold_ms: 200 
+    slow_threshold_ms: 200

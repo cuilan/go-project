@@ -11,4 +11,6 @@ type IUserRepository interface {
 	Create(ctx context.Context, user *models.User) error
 	// GetByID - 通过 ID 获取用户
 	GetByID(ctx context.Context, id uint) (*models.User, error)
+	// Count - 统计用户数量
+	Count(ctx context.Context) (int64, error)
 }

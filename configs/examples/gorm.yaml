@@ -1,11 +1,11 @@
 # GORM 框架配置 (如果提供了此部分，orm 模块将被自动初始化)
 gorm:
-  # 数据库驱动，与 go-sql 中的 driver 保持一致
+  # 数据库驱动，与 gosql 中的 driver 保持一致
   # 支持: mysql, postgres, sqlite3, sqlserver
   driver: "mysql"
 
   # DSN (Data Source Name)，用于连接数据库
-  # GORM 会复用 go-sql 的连接池，所以这里只需要提供连接信息
+  # GORM 会复用 gosql 的连接池，所以这里只需要提供连接信息
   # MySQL:         "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
   # PostgreSQL:    "host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable"
   # SQLite:        "gorm.db"

@@ -28,10 +28,10 @@ redis:
   addr: "10.123.1.47:6379" # optional: default 127.0.0.1:6379
   pool_size: 1 # optional: default 10
 
-# go-sql 数据库配置 (如果提供了此部分，mysql 模块将被自动初始化)
-go-sql:
+# gosql 数据库配置 (如果提供了此部分，gosql 模块将被自动初始化)
+gosql:
   driver: "mysql"
-  dsn: "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "root:123456@tcp(10.123.1.47:5807)/test_cloud_img?charset=utf8mb4&parseTime=True&loc=Local"
   max_open_conns: 20
   max_idle_conns: 10
   conn_max_lifetime: 3600
