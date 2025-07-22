@@ -20,7 +20,7 @@ type gosqlUserRepository struct {
 // UserRepository - 创建一个新的 database/sql 用户仓储
 func UserRepository() repository.IUserRepository {
 	once.Do(func() {
-		slog.Info("NewGosqlUserRepository")
+		slog.Info("gosql user repository init")
 		userRepo = &gosqlUserRepository{db: GetDB()}
 	})
 	return userRepo
