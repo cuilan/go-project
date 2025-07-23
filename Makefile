@@ -9,7 +9,7 @@ PKG=github.com/cuilan/go-project
 
 # 应用名称列表，应与 cmd/ 目录下的子目录名一致
 # Application names list, should match the subdirectory names under cmd/
-APPS := client server
+APPS := client server tui
 
 # ************************************************************************************
 

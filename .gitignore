@@ -34,3 +34,7 @@ logs/
 # Coverage reports
 coverage.html
 coverage.out
+
+# test data
+/test/data
+/test/testdata

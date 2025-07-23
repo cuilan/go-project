@@ -1,9 +1,10 @@
 package utils
 
 import (
+	"go-project/internal/utils"
 	"testing"
 )
 
 func TestCurrentTime(t *testing.T) {
-	t.Log(CurrentTime())
+	t.Log(utils.CurrentTime())
 }
