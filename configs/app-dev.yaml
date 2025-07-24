@@ -12,7 +12,7 @@ log:
     console_format: "text"
   # 文件输出配置
   file:
-    enable_file: true
+    enable_file: false
     level: "info"
     path: "logs"
     filename: "default.log"
@@ -31,20 +31,28 @@ redis:
 # gosql 数据库配置 (如果提供了此部分，gosql 模块将被自动初始化)
 gosql:
   driver: "mysql"
-  dsn: "root:123456@tcp(10.123.1.47:5807)/test_cloud_img?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "root:123456@tcp(10.123.1.47:5807)/test_db?charset=utf8mb4&parseTime=True&loc=Local"
   max_open_conns: 20
   max_idle_conns: 10
   conn_max_lifetime: 3600
+  conn_max_idle_time: 3600
 
-# mysql:
-#   host: "127.0.0.1"
-#   port: 3306
-#   username: "root"
-#   password: "your_password"
-#   database: "your_db"
-#   max_open_conns: 20
-#   max_idle_conns: 10
-#   conn_max_lifetime: 3600 # 秒
+# gorm 数据库配置 (如果提供了此部分，gorm 模块将被自动初始化)
+gorm:
+  driver: "mysql"
+  dsn: "root:123456@tcp(10.123.1.47:5807)/test_db?charset=utf8mb4&parseTime=True&loc=Local"
+  max_open_conns: 20
+  max_idle_conns: 10
+  conn_max_lifetime: 3600
+  conn_max_idle_time: 3600
+  config:
+    auto_migrate: false # 是否自动迁移表结构
+    table_prefix: "t_" # 全局表前缀
+    disable_foreign_key_constraint_when_migrating: true # 禁用外键约束 (生产环境建议关闭)
+    enable_logger: true # 是否启用 GORM 日志
+    enable_slog: false # 是否将 GORM 日志整合到 slog 日志中
+    log_level: "info" # GORM 日志级别: silent, info, warn, error
+    slow_threshold_ms: 200 # 慢查询阈值 (毫秒)
 
 # gin 配置 (如果提供了此部分，gin 模块将被自动初始化)
 gin:

@@ -12,18 +12,17 @@ gorm:
   dsn: "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
 
   # --- 连接池配置 (通用) ---
-  max_open_conns: 20 # 最大打开连接数
-  max_idle_conns: 10 # 最大空闲连接数
-  conn_max_lifetime: 3600 # 连接最大生命周期(秒)
-  conn_max_idle_time: 3600 # 连接最大空闲时间(秒)
+  max_open_conns: 20 # 可选: 最大打开连接数，默认：20
+  max_idle_conns: 10 # 可选: 最大空闲连接数，默认：10
+  conn_max_lifetime: 3600 # 可选: 连接最大生命周期(秒)，默认：3600
+  conn_max_idle_time: 3600 # 可选: 连接最大空闲时间(秒)，默认：3600
 
   # GORM 相关配置
   config:
-    # 全局表前缀
-    table_prefix: "t_"
-    # 禁用外键约束 (生产环境建议关闭)
-    disable_foreign_key_constraint_when_migrating: true
-    # GORM 日志级别: silent, info, warn, error
-    log_level: "info"
-    # 慢查询阈值 (毫秒)
-    slow_threshold_ms: 200 
+    auto_migrate: false # 可选: 是否自动迁移表结构，默认：false
+    table_prefix: "t_" # 可选: 全局表前缀，默认：空
+    disable_foreign_key_constraint_when_migrating: true # 可选: 禁用外键约束 (生产环境建议关闭)，默认：true
+    enable_logger: true # 可选: 是否启用 GORM 日志，默认：true
+    enable_slog: true # 可选: 是否将 GORM 日志整合到 slog 日志中，默认：true
+    log_level: "info" # 可选: GORM 日志级别: silent, info, warn, error，默认：info
+    slow_threshold_ms: 200 # 可选: 慢查询阈值 (毫秒)，默认：200

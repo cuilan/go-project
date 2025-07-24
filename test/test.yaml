@@ -1,0 +1,10 @@
+
+# Redis 配置 (如果提供了此部分，redis 模块将被自动初始化)
+redis:
+  addr: "10.123.1.47:6379"
+  pool_size: 1
+
+# gosql 数据库配置 (如果提供了此部分，gosql 模块将被自动初始化)
+gosql:
+  driver: "mysql"
+  dsn: "root:123456@tcp(10.123.1.47:5807)/test_db?charset=utf8mb4&parseTime=True&loc=Local"

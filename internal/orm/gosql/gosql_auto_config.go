@@ -16,12 +16,12 @@ import (
 
 // GoSqlConfig 是 gosql 的配置结构体
 type GoSqlConfig struct {
-	Driver          string `yaml:"driver"`
-	Dsn             string `yaml:"dsn"`
-	MaxOpenConns    int    `yaml:"max_open_conns"`
-	MaxIdleConns    int    `yaml:"max_idle_conns"`
-	ConnMaxLifetime int    `yaml:"conn_max_lifetime"`
-	ConnMaxIdleTime int    `yaml:"conn_max_idle_time"`
+	Driver          string `mapstructure:"driver"`
+	Dsn             string `mapstructure:"dsn"`
+	MaxOpenConns    int    `mapstructure:"max_open_conns"`
+	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
+	ConnMaxLifetime int    `mapstructure:"conn_max_lifetime"`
+	ConnMaxIdleTime int    `mapstructure:"conn_max_idle_time"`
 }
 
 // gosqlModule 是 gosql 模块的实现
@@ -37,7 +37,7 @@ func (m *gosqlModule) Name() string {
 	return "gosql"
 }
 
-// Init 初始化 database/sql 连接池
+// Init 初始化 database/sql 连接池并注册仓储服务
 func (m *gosqlModule) Init(v *viper.Viper) error {
 	if db != nil {
 		slog.Info("gosql database already initialized")
@@ -94,7 +94,13 @@ func (m *gosqlModule) Init(v *viper.Viper) error {
 	slog.Info("gosql database connected successfully",
 		"driver", cfg.Driver,
 		"max_open_conns", cfg.MaxOpenConns,
-		"max_idle_conns", cfg.MaxIdleConns)
+		"max_idle_conns", cfg.MaxIdleConns,
+		"conn_max_lifetime", cfg.ConnMaxLifetime,
+		"conn_max_idle_time", cfg.ConnMaxIdleTime)
+
+	// 自动注入repository到容器
+	autowired()
+
 	return nil
 }
 

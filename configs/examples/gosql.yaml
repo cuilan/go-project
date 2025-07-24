@@ -5,7 +5,7 @@ gosql:
   # ------------------- MySQL (默认启用) -------------------
   # DSN (Data Source Name) 格式: username:password@tcp(host:port)/dbname?charset=utf8mb4&parseTime=True&loc=Local
   driver: "mysql"
-  dsn: "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "root:123456@tcp(127.0.0.1:3306)/test_db?charset=utf8mb4&parseTime=True&loc=Local"
 
   # ------------------- PostgreSQL -------------------
   # DSN (Data Source Name) 格式: postgres://user:password@host:port/dbname?sslmode=disable
@@ -33,13 +33,3 @@ gosql:
   conn_max_lifetime: 3600 # 连接最大生命周期(秒)
   conn_max_idle_time: 3600 # 连接最大空闲时间(秒)
 
-  # GORM 相关配置 (如果提供了此部分，orm 模块将被自动初始化)
-  gorm:
-    # 全局表前缀
-    table_prefix: "t_"
-    # 禁用外键约束 (生产环境建议关闭)
-    disable_foreign_key_constraint_when_migrating: true
-    # GORM 日志级别: silent, info, warn, error
-    log_level: "info"
-    # 慢查询阈值 (毫秒)
-    slow_threshold_ms: 200

@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"go-project/internal/conf"
 	"go-project/internal/module"
-	"go-project/internal/orm/gosql"
-	"go-project/internal/orm/models"
-	"go-project/internal/rdb"
+	"go-project/internal/service"
 	"go-project/version"
 	"log/slog"
 	"runtime"
@@ -54,35 +52,14 @@ func RunApp(shutdownHook func()) error {
 
 	// ===== 业务逻辑写在下面 =====
 
-	rdb.GetRedis().Set(context.Background(), "name", "zhangyan", 0*time.Second)
-	value := rdb.GetRedis().Get(context.Background(), "name")
-	slog.Debug("debug", "value", value.Val())
-	slog.Info("info", "value", value.Val())
-	slog.Warn("warn", "value", value.Val())
-	slog.Error("error", "value", value.Val())
+	// 使用服务层，无需关心具体的数据访问实现
+	userService := service.NewUserService()
+	ctx := context.Background()
 
-	userRepo := gosql.UserRepository()
-	slog.Info("first", "userRepo", &userRepo)
-	userRepo = gosql.UserRepository()
-	slog.Info("second", "userRepo", &userRepo)
-	createError := userRepo.Create(context.Background(), &models.User{Name: "zhangyan"})
-	if createError != nil {
-		slog.Error("failed to create user", "err", createError)
-	} else {
-		slog.Info("create user success")
-	}
-
-	user, getErr := userRepo.GetByID(context.Background(), 1)
-	if getErr != nil {
-		slog.Error("failed to get user", "err", getErr)
-	}
-	slog.Info("get user by id", "user", user)
-
-	count, countErr := userRepo.Count(context.Background())
-	if countErr != nil {
-		slog.Error("failed to get user count", "err", countErr)
-	}
-	slog.Info("get user count", "count", count)
+	// 用户注册
+	_ = userService.UserRegister(ctx, "zhangyan", "123456")
+	user, _ := userService.UserLogin(ctx, "zhangyan", "123456")
+	_ = userService.DelUser(ctx, user.Id)
 
 	// ===== 业务逻辑写在上面 =====
 

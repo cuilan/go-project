@@ -22,9 +22,18 @@ func (r *gormUserRepository) Create(ctx context.Context, user *models.User) erro
 	return r.db.WithContext(ctx).Create(user).Error
 }
 
-func (r *gormUserRepository) GetByID(ctx context.Context, id uint) (*models.User, error) {
+func (r *gormUserRepository) GetByID(ctx context.Context, id int64) (*models.User, error) {
 	var user models.User
 	err := r.db.WithContext(ctx).First(&user, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *gormUserRepository) GetByUsername(ctx context.Context, username string) (*models.User, error) {
+	var user models.User
+	err := r.db.WithContext(ctx).Where("username = ?", username).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -38,4 +47,8 @@ func (r *gormUserRepository) Count(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (r *gormUserRepository) Delete(ctx context.Context, id int64) error {
+	return r.db.WithContext(ctx).Delete(&models.User{}, id).Error
 }
