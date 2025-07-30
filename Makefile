@@ -121,10 +121,11 @@ version: ## Show version information
 	@echo "ROOTDIR: $(ROOTDIR)"
 	@echo "APPS: $(APPS)"
 	@echo "Current platform: $(CURRENT_PLATFORM)"
+	@echo "Go version: $(shell $(GO) version)"
 	@echo "git tag: $(GIT_VERSION)"
 	@echo "git branch: $(GIT_REVISION)"
 	@echo "git commit short: $(shell git rev-parse --short HEAD)"
-	@echo "git commit short: $(shell git rev-parse HEAD)"
+	@echo "git commit long: $(shell git rev-parse HEAD)"
 
 mod-tidy: ## Tidy go.mod file
 	@echo "$(WHALE) $@"
