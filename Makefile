@@ -119,12 +119,12 @@ CURRENT_PLATFORM := $(shell go env GOOS)/$(shell go env GOARCH)
 version: ## Show version information
 	@echo "$(WHALE) $@"
 	@echo "ROOTDIR: $(ROOTDIR)"
-	@echo "APP_NAME: $(APP_NAME)"
+	@echo "APPS: $(APPS)"
 	@echo "Current platform: $(CURRENT_PLATFORM)"
 	@echo "git tag: $(GIT_VERSION)"
 	@echo "git branch: $(GIT_REVISION)"
-	@echo "git commit: $(GIT_COMMIT)"
-	@$(GO) run $(MAIN_PACKAGE) --version
+	@echo "git commit short: $(shell git rev-parse --short HEAD)"
+	@echo "git commit short: $(shell git rev-parse HEAD)"
 
 mod-tidy: ## Tidy go.mod file
 	@echo "$(WHALE) $@"

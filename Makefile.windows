@@ -7,7 +7,7 @@ INFO    = "[INFO]"
 WARNING = "[WARN]"
 ERROR   = "[ERROR]"
 DIST    = "[PKG]"
-DO      = "-"
+DO      = "->"
 
 # ====================================================================================
 # Main package file for Windows
