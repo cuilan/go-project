@@ -8,3 +8,15 @@ redis:
 gosql:
   driver: "mysql"
   dsn: "root:123456@tcp(10.123.1.47:5807)/test_db?charset=utf8mb4&parseTime=True&loc=Local"
+
+# gorm 数据库配置 (如果提供了此部分，gorm 模块将被自动初始化)
+gorm:
+  driver: "mysql"
+  dsn: "root:123456@tcp(10.123.1.47:5807)/test_db?charset=utf8mb4&parseTime=True&loc=Local"
+  config:
+    auto_migrate: false # 是否自动迁移表结构
+    table_prefix: "t_" # 全局表前缀
+
+# net/http 配置 (如果提供了此部分，net/http 模块将被自动初始化)
+http:
+  port: 8081

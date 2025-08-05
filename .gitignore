@@ -22,6 +22,7 @@ coverage.html
 # IDE-specific
 .idea/
 .vscode/
+.cursor/
 
 # Compiled binary files
 bin/

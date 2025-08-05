@@ -1,0 +1,10 @@
+# gin 配置 (如果提供了此部分，gin 模块将被自动初始化)
+gin:
+  mode: debug # 可选: debug, release, test, 默认 debug
+  port: 8080 # 可选: 端口, 默认 8080
+  read_timeout: 10 # 可选: 读取超时时间, 单位: 秒, 默认 10
+  write_timeout: 10 # 可选: 写入超时时间, 单位: 秒, 默认 10
+  max_header_bytes: 1024 # 可选: 最大头部长度, 单位: 字节, 默认 1024
+  enable_tls: false # 可选: 是否启用 TLS 加密, 默认 false
+  tls_cert_file: "" # 可选: 证书文件路径, 默认 ""
+  tls_key_file: "" # 可选: 私钥文件路径, 默认 ""

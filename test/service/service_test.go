@@ -23,7 +23,7 @@ func TestUserService(t *testing.T) {
 	gosqlModule := gosql.NewModule()
 	gosqlModule.Init(viper.GetViper())
 
-	userService := service.NewUserService()
+	userService := service.GetUserService()
 	ctx := context.Background()
 
 	err := userService.UserRegister(ctx, "zhangyan", "123456")

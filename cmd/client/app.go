@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"go-project/internal/conf"
 	"go-project/internal/module"
-	"go-project/internal/service"
 	"go-project/version"
 	"log/slog"
 	"runtime"
@@ -53,13 +52,6 @@ func RunApp(shutdownHook func()) error {
 	// ===== 业务逻辑写在下面 =====
 
 	// 使用服务层，无需关心具体的数据访问实现
-	userService := service.NewUserService()
-	ctx := context.Background()
-
-	// 用户注册
-	_ = userService.UserRegister(ctx, "zhangyan", "123456")
-	user, _ := userService.UserLogin(ctx, "zhangyan", "123456")
-	_ = userService.DelUser(ctx, user.Id)
 
 	// ===== 业务逻辑写在上面 =====
 

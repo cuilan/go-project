@@ -54,13 +54,26 @@ gorm:
     log_level: "info" # GORM 日志级别: silent, info, warn, error
     slow_threshold_ms: 200 # 慢查询阈值 (毫秒)
 
+# net/http 配置 (如果提供了此部分，net/http 模块将被自动初始化)
+http:
+  port: 8081 # 可选: 端口，默认: 8081
+  read_timeout: 10 # 可选: 读取超时时间，单位: 秒，默认: 10
+  write_timeout: 10 # 可选: 写入超时时间，单位: 秒，默认: 10
+  max_header_bytes: 1024 # 可选: 最大头部长度，单位: 字节，默认: 1024
+  enable_tls: false # 可选: 是否启用 TLS 加密，默认: false
+  tls_cert_file: "" # 可选: 证书文件路径，默认: ""
+  tls_key_file: "" # 可选: 私钥文件路径，默认: ""
+
 # gin 配置 (如果提供了此部分，gin 模块将被自动初始化)
 gin:
-  mode: debug # 可选 debug, release, test, 默认 debug
-  port: 8888 # 可选 8080, 默认 8080
-  read_timeout: 10 # 可选 10, 默认 10
-  write_timeout: 10 # 可选 10, 默认 10
-  max_header_bytes: 1024 # 可选 1024, 默认 1024
+  mode: debug # 可选: debug, release, test, 默认 debug
+  port: 8080 # 可选: 端口, 默认 8080
+  read_timeout: 10 # 可选: 读取超时时间, 单位: 秒, 默认 10
+  write_timeout: 10 # 可选: 写入超时时间, 单位: 秒, 默认 10
+  max_header_bytes: 1024 # 可选: 最大头部长度, 单位: 字节, 默认 1024
+  enable_tls: false # 可选: 是否启用 TLS 加密, 默认 false
+  tls_cert_file: "" # 可选: 证书文件路径, 默认 ""
+  tls_key_file: "" # 可选: 私钥文件路径, 默认 ""
 
 # Nats 配置 (如果提供了此部分，nats 模块将被自动初始化)
 # nats:
