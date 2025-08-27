@@ -1,3 +1,15 @@
+# ------------------------------------------------------------------------------
+# 全局构建参数
+# 在所有 'FROM' 指令之前声明的 ARG 具有全局作用域，
+# 这对于在 'COPY --from' 中使用变量至关重要。
+# ------------------------------------------------------------------------------
+ARG BUILDER_IMAGE=builder
+ARG APP_NAME=client
+
+# ------------------------------------------------------------------------------
+# 第一阶段: builder
+# 负责编译 Go 源代码。
+# ------------------------------------------------------------------------------
 FROM golang:1.25-alpine3.22 AS builder
 
 LABEL maintainer="zhangyan <zhangyan@weattech.com>"
@@ -24,13 +36,16 @@ COPY . .
 COPY build/build_in_docker.sh /build.sh
 RUN chmod +x /build.sh && /build.sh
 
-# 第二阶段，创建最终的、最小化的镜像。
-# 它可以接收一个外部的 BUILDER_IMAGE 参数，或者默认使用此文件中的 'builder' 阶段。
+# ------------------------------------------------------------------------------
+# 第二阶段: final
+# 创建最终的、最小化的可运行镜像。
+# ------------------------------------------------------------------------------
 FROM alpine:3.22
 
-# 将 ARG 声明移至阶段内部，以确保作用域正确
-ARG BUILDER_IMAGE=builder
-ARG APP_NAME=client
+# 在阶段内部重新声明 ARG，以便在后续指令中使用它们的值。
+# 它们会继承全局 ARG 的值。
+ARG BUILDER_IMAGE
+ARG APP_NAME
 
 # 从 builder 阶段复制时区信息，确保最终镜像时区正确
 COPY --from=${BUILDER_IMAGE} /etc/localtime /etc/localtime
