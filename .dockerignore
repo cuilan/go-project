@@ -1,0 +1,20 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.cursor
+.idea
+.vscode
+
+# Local build artifacts
+bin/
+release/
+
+# Docs & Tests
+*.md
+docs/
+test/
+log/
+logs/
+sql/
