@@ -34,7 +34,10 @@ jobs:
       - name: Build and push builder image
         id: build_builder
         run: |
-          IMAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          # 使用 Bash 的内置功能将仓库名称转换为小写，这比 'tr' 更健- 壮
+          REPO_LOWERCASE="${{ github.repository }}"
+          IMAGE_NAME="${REPO_LOWERCASE,,}"
+          
           BUILDER_TAG="${IMAGE_NAME}:builder-${{ github.sha }}"
           echo "BUILDER_TAG=${BUILDER_TAG}" >> $GITHUB_OUTPUT
           docker buildx build \
@@ -48,7 +51,11 @@ jobs:
       - name: Build and push application images
         run: |
           BUILDER_TAG=${{ steps.build_builder.outputs.BUILDER_TAG }}
-          IMAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          # 再次转换，确保最终的应用镜像名称也是小写的
+          REPO_LOWERCASE="${{ github.repository }}"
+          IMAGE_NAME="${REPO_LOWERCASE,,}"
+
           # 遍历 'cmd' 目录下的所有子目录
           for app_dir in cmd/*; do
             if [ -d "$app_dir" ]; then
