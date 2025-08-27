@@ -31,12 +31,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and push Docker images
+      - name: Build and push builder image
+        id: build_builder
         run: |
-          # 将 GitHub 仓库名称转换为小写，作为镜像名称
-          # 例如：your-github-username/go-project
           IMAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          BUILDER_TAG="${IMAGE_NAME}:builder-${{ github.sha }}"
+          echo "BUILDER_TAG=${BUILDER_TAG}" >> $GITHUB_OUTPUT
+          docker buildx build \
+            --platform linux/amd64 \
+            --target builder \
+            --tag "${BUILDER_TAG}" \
+            --file build/Dockerfile \
+            --push \
+            .
 
+      - name: Build and push application images
+        run: |
+          BUILDER_TAG=${{ steps.build_builder.outputs.BUILDER_TAG }}
+          IMAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           # 遍历 'cmd' 目录下的所有子目录
           for app_dir in cmd/*; do
             if [ -d "$app_dir" ]; then
@@ -47,13 +59,14 @@ jobs:
               FULL_IMAGE_NAME="${IMAGE_NAME}:${APP_NAME}"
 
               echo "--------------------------------------------------"
-              echo "Building and pushing image for: ${APP_NAME}"
+              echo "Packaging and pushing image for: ${APP_NAME}"
               echo "Image Tag: ${FULL_IMAGE_NAME}"
               echo "--------------------------------------------------"
 
               docker buildx build \
-                --platform linux/amd64,linux/arm64 \
+                --platform linux/amd64 \
                 --file build/Dockerfile \
+                --build-arg BUILDER_IMAGE="${BUILDER_TAG}" \
                 --build-arg APP_NAME="${APP_NAME}" \
                 --tag "${FULL_IMAGE_NAME}" \
                 --push \
