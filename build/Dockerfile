@@ -26,10 +26,10 @@ RUN chmod +x /build.sh && /build.sh
 
 # 第二阶段，创建最终的、最小化的镜像。
 # 它可以接收一个外部的 BUILDER_IMAGE 参数，或者默认使用此文件中的 'builder' 阶段。
-ARG BUILDER_IMAGE=builder
 FROM alpine:3.22
 
-# 定义要运行的应用名，可以被 docker build --build-arg 覆盖
+# 将 ARG 声明移至阶段内部，以确保作用域正确
+ARG BUILDER_IMAGE=builder
 ARG APP_NAME=client
 
 # 从 builder 阶段复制时区信息，确保最终镜像时区正确
