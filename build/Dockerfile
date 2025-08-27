@@ -1,12 +1,4 @@
 # ------------------------------------------------------------------------------
-# 全局构建参数
-# 在所有 'FROM' 指令之前声明的 ARG 具有全局作用域，
-# 这对于在 'COPY --from' 中使用变量至关重要。
-# ------------------------------------------------------------------------------
-ARG BUILDER_IMAGE=builder
-ARG APP_NAME=client
-
-# ------------------------------------------------------------------------------
 # 第一阶段: builder
 # 负责编译 Go 源代码。
 # ------------------------------------------------------------------------------
@@ -42,18 +34,15 @@ RUN chmod +x /build.sh && /build.sh
 # ------------------------------------------------------------------------------
 FROM alpine:3.22
 
-# 在阶段内部重新声明 ARG，以便在后续指令中使用它们的值。
-# 它们会继承全局 ARG 的值。
-ARG BUILDER_IMAGE
 ARG APP_NAME
 
 WORKDIR /app
 
 # 从 builder 阶段复制时区信息，确保最终镜像时区正确
-COPY --from=${BUILDER_IMAGE} /etc/localtime /etc/localtime
-COPY --from=${BUILDER_IMAGE} /etc/timezone /etc/timezone
+COPY --from=builder /etc/localtime /etc/localtime
+COPY --from=builder /etc/timezone /etc/timezone
 # 从构建器阶段复制指定的可执行文件
-COPY --from=${BUILDER_IMAGE} "/app/bin/${APP_NAME}" "/app/${APP_NAME}"
+COPY --from=builder "/app/bin/${APP_NAME}" "/app/${APP_NAME}"
 
 # 运行指定应用
 CMD ["/app/${APP_NAME}"]

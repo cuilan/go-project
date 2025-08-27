@@ -31,25 +31,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and push builder image
-        id: build_builder
-        run: |
-          # 使用 awk 进行小写转换
-          IMAGE_NAME=$(echo "${{ github.repository }}" | awk '{print tolower($0)}')
-          
-          BUILDER_TAG="${IMAGE_NAME}:builder-${{ github.sha }}"
-          echo "BUILDER_TAG=${BUILDER_TAG}" >> $GITHUB_OUTPUT
-          docker buildx build \
-            --platform linux/amd64 \
-            --target builder \
-            --tag "${BUILDER_TAG}" \
-            --file build/Dockerfile \
-            --push \
-            .
-
       - name: Build and push application images
         run: |
-          BUILDER_TAG=${{ steps.build_builder.outputs.BUILDER_TAG }}
+          # 使用 awk 进行小写转换
           IMAGE_NAME=$(echo "${{ github.repository }}" | awk '{print tolower($0)}')
 
           # 遍历 'cmd' 目录下的所有子目录
@@ -58,18 +42,18 @@ jobs:
               # 从目录路径中提取应用名称
               APP_NAME=$(basename "$app_dir")
               
-              # 构造完整的镜像标签，例如：your-github-username/go-project:client
+              # 构造完整的镜像标签
               FULL_IMAGE_NAME="${IMAGE_NAME}:${APP_NAME}"
 
               echo "--------------------------------------------------"
-              echo "Packaging and pushing image for: ${APP_NAME}"
+              echo "Building and pushing single-stage image for: ${APP_NAME}"
               echo "Image Tag: ${FULL_IMAGE_NAME}"
               echo "--------------------------------------------------"
 
+              # 执行单阶段构建和推送
               docker buildx build \
                 --platform linux/amd64 \
                 --file build/Dockerfile \
-                --build-arg BUILDER_IMAGE="${BUILDER_TAG}" \
                 --build-arg APP_NAME="${APP_NAME}" \
                 --tag "${FULL_IMAGE_NAME}" \
                 --push \
