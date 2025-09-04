@@ -120,3 +120,42 @@ func MoveFile(src, dst string) error {
 	}
 	return nil
 }
+
+// CopyFileWithTempAndRename 复制文件，先去掉后缀名作为临时文件，复制完成后再重命名
+// 此方法会先检查临时文件是否存在，如果存在则说明正在复制，返回错误
+func CopyFileWithTempAndRename(sourceFile, targetFile string) error {
+	// 获取目标文件的目录和文件名
+	targetDir := filepath.Dir(targetFile)
+	targetName := filepath.Base(targetFile)
+
+	// 去掉后缀名作为临时文件名
+	ext := filepath.Ext(targetName)
+	nameWithoutExt := strings.TrimSuffix(targetName, ext)
+	tempFile := filepath.Join(targetDir, nameWithoutExt)
+
+	// 检查临时文件是否存在，如果存在说明正在复制
+	if FileExist(tempFile) {
+		return os.ErrExist // 返回文件已存在错误，表示正在复制中
+	}
+
+	// 确保目标目录存在
+	if !DirExist(targetDir) {
+		if !MkdirAll(targetDir) {
+			return os.ErrPermission
+		}
+	}
+
+	// 先复制到临时文件（无后缀名）
+	if err := CopyFile(sourceFile, tempFile); err != nil {
+		return err
+	}
+
+	// 复制成功后，将临时文件重命名为目标文件
+	if err := os.Rename(tempFile, targetFile); err != nil {
+		// 如果重命名失败，清理临时文件
+		os.Remove(tempFile)
+		return err
+	}
+
+	return nil
+}
