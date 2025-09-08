@@ -121,17 +121,11 @@ func MoveFile(src, dst string) error {
 	return nil
 }
 
-// CopyFileWithTempAndRename 复制文件，先去掉后缀名作为临时文件，复制完成后再重命名
+// CopyFileWithTempAndRename 复制文件，先添加.tmp后缀作为临时文件，复制完成后再重命名
 // 此方法会先检查临时文件是否存在，如果存在则说明正在复制，返回错误
 func CopyFileWithTempAndRename(sourceFile, targetFile string) error {
-	// 获取目标文件的目录和文件名
-	targetDir := filepath.Dir(targetFile)
-	targetName := filepath.Base(targetFile)
-
-	// 去掉后缀名作为临时文件名
-	ext := filepath.Ext(targetName)
-	nameWithoutExt := strings.TrimSuffix(targetName, ext)
-	tempFile := filepath.Join(targetDir, nameWithoutExt)
+	// 创建临时文件名：目标文件名 + ".tmp"
+	tempFile := targetFile + ".tmp"
 
 	// 检查临时文件是否存在，如果存在说明正在复制
 	if FileExist(tempFile) {
@@ -139,13 +133,14 @@ func CopyFileWithTempAndRename(sourceFile, targetFile string) error {
 	}
 
 	// 确保目标目录存在
+	targetDir := filepath.Dir(targetFile)
 	if !DirExist(targetDir) {
 		if !MkdirAll(targetDir) {
 			return os.ErrPermission
 		}
 	}
 
-	// 先复制到临时文件（无后缀名）
+	// 先复制到临时文件（添加.tmp后缀）
 	if err := CopyFile(sourceFile, tempFile); err != nil {
 		return err
 	}
@@ -158,4 +153,15 @@ func CopyFileWithTempAndRename(sourceFile, targetFile string) error {
 	}
 
 	return nil
+}
+
+// ReplecePrefix 替换前缀
+// 将原有前缀替换为给定的前缀，方便存储及代理读取
+// 输入: /data/store/L1/AQUA_MODIS/20250827
+// 输出: /store/L1/AQUA_MODIS/20250827
+func CutPrefix(path, prefix string) string {
+	path = filepath.Clean(path)
+	prefix = filepath.Clean(prefix)
+	prefix, _ = strings.CutPrefix(path, prefix)
+	return prefix
 }
