@@ -1,7 +1,7 @@
 package rdb
 
 import (
-	"github.com/redis/go-redis/v9"
+	redis "github.com/redis/go-redis/v9"
 )
 
 // redisClient 将在 redis 配置存在时被初始化

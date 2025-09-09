@@ -137,10 +137,12 @@ mod-download: ## Download modules to local cache
 	@echo "$(WHALE) $@"
 	@echo "$(RUN)  Downloading dependencies..."
 
-install-tools: ## Install code checking development tools (staticcheck)
+install-tools: ## Install code checking development tools (staticcheck, golangci-lint)
 	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Installing development tools (staticcheck)..."
+	@echo "$(RUN)  Installing development tools..."
 	@$(GO) install honnef.co/go/tools/cmd/staticcheck@latest
+	@echo "$(RUN)  Installing golangci-lint..."
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$($(GO) env GOPATH)/bin v1.54.2
 	@echo "$(OK)  Tools installation completed."
 
 # ====================================================================================
@@ -166,13 +168,59 @@ test-cover: ## Run tests and generate HTML coverage report
 
 lint: ## Run all code checkers
 	@echo "$(WHALE) $@"
-	@echo "$(RUN)  Running code formatting check..."
-	@$(GOFMT) -l -w .
-	@echo "$(RUN)  Running go vet..."
-	@$(GO) vet ./...
-	@echo "$(RUN)  Running staticcheck..."
-	@staticcheck ./...
+	@echo "$(RUN)  Running golangci-lint..."
+	@golangci-lint run
 	@echo "$(OK)  All code checks completed."
+
+lint-fix: ## Run linters and fix auto-fixable issues
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Running golangci-lint with auto-fix..."
+	@golangci-lint run --fix
+	@echo "$(OK)  Linting and auto-fix completed."
+
+format: ## Format code
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Formatting code..."
+	@$(GOFMT) -l -w .
+	@$(GO) run golang.org/x/tools/cmd/goimports -l -w .
+	@echo "$(OK)  Code formatting completed."
+
+# ====================================================================================
+# API Documentation (Swagger)
+# ====================================================================================
+
+swag-init: ## Generate Swagger documentation (e.g., make swag-init server)
+	@APP=$(word 2,$(MAKECMDGOALS)); \
+	if [ -z "$$APP" ]; then \
+		echo "Error: Please specify the application (e.g., make swag-init server)"; \
+		exit 1; \
+	fi; \
+	echo "$(WHALE) $@"; \
+	echo "$(RUN)  Generating Swagger documentation for $$APP..."; \
+	swag init -g cmd/$$APP/main.go --output docs/swagger/$$APP --parseDependency; \
+	echo "$(OK)  Swagger documentation generated in docs/swagger/$$APP/ directory."
+
+swag-fmt: ## Format Swagger comments in Go files (e.g., make swag-fmt server)
+	@APP=$(word 2,$(MAKECMDGOALS)); \
+	if [ -z "$$APP" ]; then \
+		echo "Error: Please specify the application (e.g., make swag-fmt server)"; \
+		exit 1; \
+	fi; \
+	echo "$(WHALE) $@"; \
+	echo "$(RUN)  Formatting Swagger comments for $$APP..."; \
+	swag fmt -g cmd/$$APP/main.go; \
+	echo "$(OK)  Swagger comments formatted."
+
+swag-clean: ## Clean generated Swagger documentation files
+	@echo "$(WHALE) $@"
+	@echo "$(RUN)  Cleaning Swagger documentation..."
+	@rm -rf docs/swagger
+	@echo "$(OK)  Swagger documentation cleaned."
+
+swag-check: ## Check if swag tool is installed
+	@echo "$(WHALE) $@"
+	@which swag > /dev/null 2>&1 || (echo "$(RUN)  Installing swag tool..." && go install github.com/swaggo/swag/cmd/swag@latest)
+	@echo "$(OK)  Swag tool is available."
 
 # ====================================================================================
 # Dependency management
@@ -312,7 +360,9 @@ clean: ## Clean build artifacts and temporary files
 
 help: ## Show this help information
 	@echo ""
-	@echo "Usage: make [target] [app1|app2|...]"
+	@echo "Usage: make [target] [app]"
+	@echo ""
+	@echo "Available applications: $(APPS)"
 	@echo ""
 	@echo "Available targets:"
 
@@ -327,12 +377,19 @@ help: ## Show this help information
 	@echo ""
 	@echo "Run targets:"
 	@awk 'BEGIN {FS = ":.*?## "} /^(run|run-bin):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+	
+	@echo ""
+	@echo "Documentation targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^(swag-init|swag-fmt|swag-clean|swag-check):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+	@echo ""
+	@echo "Code Quality targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^(lint|lint-fix|format):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
 	@echo ""
 	@echo "Common targets:"
-	@awk 'BEGIN {FS = ":.*?## "} /^(version|mod-tidy|mod-download|install-tools|lint|mod-vendor|clean|help):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+	@awk 'BEGIN {FS = ":.*?## "} /^(version|mod-tidy|mod-download|install-tools|mod-vendor|clean|help):.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
-.PHONY:  version mod-tidy mod-download install-tools test test-cover lint mod-vendor run build build-all dist release clean help
-
+.PHONY:  version mod-tidy mod-download install-tools test test-cover lint lint-fix format mod-vendor swag-init swag-fmt swag-clean swag-check run build build-all dist release clean help
 
 .DEFAULT_GOAL := help

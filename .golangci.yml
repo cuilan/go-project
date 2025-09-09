@@ -1,0 +1,76 @@
+# GolangCI-Lint 配置文件 v2.x
+# 文档: https://golangci-lint.run/usage/configuration/
+
+version: 2
+
+run:
+  timeout: 5m
+  go: "1.24"
+  skip-dirs:
+    - vendor
+    - docs/swagger
+    - bin
+    - dist
+
+output:
+  format: colored-line-number
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  lll:
+    line-length: 120
+  funlen:
+    lines: 100
+    statements: 50
+  gosec:
+    excludes:
+      - G204 # Subprocess launched with variable
+  misspell:
+    locale: US
+
+linters:
+  enable:
+    # 默认启用的 linters
+    - errcheck      # 检查未处理的错误
+    - govet         # go vet检查
+    - ineffassign   # 检查无效赋值
+    - staticcheck   # 静态分析
+    - unused        # 检查未使用的代码
+    
+    # 额外启用的 linters
+    - dupl          # 代码重复检查
+    - goconst       # 重复字符串常量检查
+    - gocyclo       # 圈复杂度检查
+    - funlen        # 函数长度检查
+    - lll           # 行长度检查
+    - misspell      # 拼写检查
+    - gosec         # 安全检查
+    - unconvert     # 不必要的类型转换
+    - unparam       # 未使用的函数参数
+    - whitespace    # 空白字符检查
+
+issues:
+  exclude-rules:
+    - path: "_test\\.go"
+      linters:
+        - funlen
+        - gocyclo
+        - dupl
+        - gosec
+    - path: "cmd/"
+      linters:
+        - funlen
+    - path: "docs/"
+      linters:
+        - all
+    - path: "tools/"
+      linters:
+        - all
+  max-issues-per-linter: 0
+  max-same-issues: 0

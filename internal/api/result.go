@@ -9,9 +9,9 @@ const (
 )
 
 type Result struct {
-	Code int         `json:"code"`
-	Msg  string      `json:"msg"`
 	Data interface{} `json:"data"`
+	Msg  string      `json:"msg"`
+	Code int         `json:"code"`
 }
 
 func CustomResult(code int, msg string, data interface{}) *Result {

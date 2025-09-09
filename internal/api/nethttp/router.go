@@ -14,7 +14,16 @@ func (s *Server) registerRoutes() {
 	s.router.HandleFunc("/user/login", s.handleUserLogin())
 }
 
-// handleHealthCheck 是一个健康检查的 handler。
+// handleHealthCheck 健康检查接口
+//
+//	@Summary		Health Check
+//	@Description	检查服务器健康状态
+//	@Tags			Common
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	api.SuccessResponse{data=api.HealthResponse}	"健康检查成功"
+//	@Failure		500	{object}	api.ErrorResponse									"服务器内部错误"
+//	@Router			/health [get]
 func (s *Server) handleHealthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
