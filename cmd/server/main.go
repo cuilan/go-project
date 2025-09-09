@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Go Project Contributors
+// Licensed under the MIT License. See LICENSE file in the project root for license information.
+
 package main
 
 import (

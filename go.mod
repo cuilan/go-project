@@ -1,3 +1,5 @@
+// Go Project - 一个现代化的Go项目模板
+// License: MIT
 module go-project
 
 go 1.24

@@ -1,5 +1,8 @@
 //go:build darwin || linux
 
+// Copyright (c) 2024 Go Project Contributors
+// Licensed under the MIT License. See LICENSE file in the project root for license information.
+
 // Package main 提供了基于Gin框架的HTTP API服务器
 //
 //	@title						Go Project API (Gin)
